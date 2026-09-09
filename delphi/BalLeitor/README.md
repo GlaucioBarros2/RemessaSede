@@ -1,8 +1,10 @@
-# BalLeitor — Leitor de arquivos de balança (Delphi XE5)
+# BalLeitor — Leitor de arquivos de balança para Balanço de Estoque (Delphi XE5)
 
-Aplicativo console em Delphi XE5 que lê os arquivos `bal_*.txt` gerados
-pela balança e, para cada um, gera um arquivo de saída `bal_*.XXX` com os
-dados de produto já tratados.
+Programa em Delphi XE5 que fica **residente na bandeja do sistema**
+(o ícone ao lado do relógio, no rodapé da tela do Windows), monitorando
+uma pasta em busca de arquivos `bal_*.txt` — a contagem de saldo feita
+na prateleira do depósito — e gerando, para cada um, um arquivo
+`bal_*.XXX` já tratado.
 
 ## Formato de entrada (`bal_*.txt`)
 
@@ -17,65 +19,97 @@ sede.daniel;2026/09/09 11:15;2026/09/09 11:20
 ```
 
 - **Linha 1**: cabeçalho (sede; data/hora início; data/hora fim) — sempre
-  ignorado pelo programa.
+  ignorado.
 - **Linha 2 em diante**: `código;quantidade;apresentação` — a
   apresentação é opcional.
 
 ## Regras aplicadas
 
 - Somente as linhas a partir da 2ª são lidas.
-- Em **quantidade**, apenas a parte inteira é gravada no arquivo de
-  saída — o que vier depois do separador decimal é descartado (sem
-  arredondamento): `628.000` → `628`, `4.000` → `4`, `0.000` → `0`.
-- O arquivo de saída mantém o mesmo nome base do arquivo de entrada,
-  apenas trocando a extensão para `.XXX` (constante `EXTENSAO_SAIDA` no
-  início do `.dpr` — ajuste ali caso a extensão real precise ser outra).
+- Em **quantidade**, apenas a parte inteira é gravada — o que vier
+  depois do separador decimal é descartado (sem arredondamento):
+  `628.000` → `628`, `4.000` → `4`, `0.000` → `0`.
+- O arquivo de saída mantém o mesmo nome base, trocando a extensão
+  para `.XXX` (constante `EXTENSAO_SAIDA` em `uMain.pas` — ajuste se a
+  extensão real precisar ser outra).
 
-Com o exemplo em `exemplo/bal_20260909.txt`, o programa gera
-`exemplo/bal_20260909.XXX` com o conteúdo:
+## Pasta "Processados"
+
+- O `.XXX` gerado é salvo dentro da subpasta **`Processados`**, criada
+  automaticamente se ainda não existir.
+- O `.txt` original (a contagem) é **movido junto** para `Processados`
+  depois de gerado o `.XXX` — assim os dois ficam juntos para
+  conferência/auditoria, e o mesmo arquivo não é processado de novo no
+  próximo ciclo.
+- Se já existir um arquivo com o mesmo nome em `Processados` (`.txt`
+  ou `.XXX`), o programa não sobrescreve: acrescenta `_1`, `_2` etc.
+  antes da extensão.
+
+## Como o programa roda
+
+1. Ao abrir, uma caixinha pergunta **de quantos em quantos minutos**
+   verificar a pasta em busca de novos `bal_*.txt`.
+2. Depois disso, **não abre nenhuma janela** — fica só o ícone na
+   bandeja do sistema (pode estar escondido atrás da setinha "mostrar
+   ícones ocultos", no canto inferior direito da tela).
+3. Ele processa imediatamente ao iniciar, e depois repete no intervalo
+   configurado.
+4. **Clique com o botão direito** no ícone para abrir o menu:
+   - **Processar agora** — força uma varredura imediata, sem esperar o
+     intervalo.
+   - **Encerrar** — para o programa a qualquer momento.
+   - **Duplo clique** no ícone também força uma varredura imediata.
+5. Cada execução gera uma linha em `BalLeitor.log` (na mesma pasta do
+   `.exe`), com data/hora, arquivos processados e eventuais avisos ou
+   erros — como não há janela nem console, esse log é o registro do
+   que aconteceu.
+
+## Pasta monitorada
+
+Por padrão, o programa monitora a **pasta onde o `.exe` está**. Se
+quiser apontar para outra pasta, crie um atalho para o `.exe` e
+informe o caminho como parâmetro, por exemplo:
 
 ```
-022763;0;A
-020624;0;A
-007956;4;V
-005465;628;V
-005057;620;A
-020620;0;V
+BalLeitor.exe C:\Balanca\Arquivos
 ```
-
-## Uso
-
-```
-BalLeitor.exe [pasta]
-```
-
-- Sem parâmetro: processa os arquivos `bal_*.txt` na mesma pasta do
-  executável.
-- Com parâmetro: processa os arquivos `bal_*.txt` na pasta informada,
-  por exemplo `BalLeitor.exe C:\Balanca\Retorno`.
-
-O programa varre todos os arquivos que casam com `bal_*.txt` na pasta,
-gera o `.XXX` correspondente para cada um e exibe um resumo no console
-(arquivos processados, linhas gravadas e eventuais avisos/erros por
-arquivo — um arquivo com problema não interrompe o processamento dos
-demais).
 
 ## Compilando
 
-Abra `BalLeitor.dpr` no Delphi XE5 e compile (`Project > Build`), ou via
-linha de comando com o `dcc32` do XE5:
+Abra `BalLeitor.dpr` no Delphi XE5 (`File → Open Project...`) e
+compile (`Ctrl+F9`), ou via linha de comando com o `dcc32` do XE5:
 
 ```
 dcc32 BalLeitor.dpr
 ```
 
+Arquivos do projeto:
+- `BalLeitor.dpr` — arquivo principal, pergunta o intervalo e inicia o
+  formulário.
+- `uMain.pas` / `uMain.dfm` — formulário (sem janela visível), ícone
+  de bandeja, timer e toda a lógica de leitura/gravação/movimentação
+  dos arquivos.
+- `exemplo/bal_20260909.txt` — arquivo de exemplo para teste.
+
+## Testando
+
+1. Compile o projeto.
+2. Copie `exemplo/bal_20260909.txt` para a pasta do `.exe` compilado
+   (ex.: `Win32\Debug`).
+3. Rode o `.exe`, informe o intervalo (ex.: `1`) e confirme.
+4. Verifique se surgiu a pasta `Processados` com dois arquivos dentro:
+   `bal_20260909.txt` (movido) e `bal_20260909.XXX` (gerado), além do
+   `BalLeitor.log` registrando o processamento.
+5. Clique com o botão direito no ícone da bandeja e escolha
+   **Encerrar** para parar o programa.
+
 ## Observações / pontos de ajuste
 
-- O separador decimal aceito na leitura é `.` ou `,` — o texto é
-  cortado no primeiro separador encontrado, então isso não depende da
+- O separador decimal aceito é `.` ou `,` — não depende da
   configuração regional do Windows.
-- Linhas em branco são ignoradas; linhas com menos de 2 campos
-  (`código;quantidade`) geram um aviso no console e são puladas, sem
-  interromper o processamento do arquivo.
-- Se a extensão de saída não for literalmente `.XXX`, basta alterar a
-  constante `EXTENSAO_SAIDA` no topo do `BalLeitor.dpr`.
+- Linhas em branco são ignoradas; linhas com menos de 2 campos geram
+  um aviso no log e são puladas, sem interromper o processamento do
+  arquivo.
+- Se a extensão de saída não for literalmente `.XXX`, ou se quiser
+  apagar o `.txt` original em vez de movê-lo, ajuste a constante
+  `EXTENSAO_SAIDA` e o trecho de `TFile.Move` em `uMain.pas`.
