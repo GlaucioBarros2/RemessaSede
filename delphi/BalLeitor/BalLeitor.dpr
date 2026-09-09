@@ -39,7 +39,8 @@ program BalLeitor;
 uses
   System.SysUtils,
   System.Classes,
-  System.IOUtils;
+  System.IOUtils,
+  System.Types;
 
 const
   MASCARA_ENTRADA = 'bal_*.txt';
@@ -154,7 +155,7 @@ end;
 
 var
   cPasta: string;
-  aArquivos: TArray<string>;
+  aArquivos: TStringDynArray;
   cArquivo: string;
   nTotal: Integer;
 begin
