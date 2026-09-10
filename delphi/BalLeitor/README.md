@@ -89,18 +89,44 @@ Arquivos do projeto:
 - `uMain.pas` / `uMain.dfm` — formulário (sem janela visível), ícone
   de bandeja, timer e toda a lógica de leitura/gravação/movimentação
   dos arquivos.
+- `res/caixa.ico` — imagem de uma caixinha usada no ícone da bandeja.
 - `exemplo/bal_20260909.txt` — arquivo de exemplo para teste.
+
+## Ícone da bandeja
+
+O programa procura `res\caixa.ico` **na pasta do executável** e usa
+essa imagem no ícone da bandeja; se não encontrar o arquivo, usa o
+ícone padrão do Delphi como reserva (o programa nunca deixa de abrir
+por causa disso).
+
+Então, ao copiar o `.exe` para rodar em outro lugar (ex.: produção),
+leve a pasta `res` junto, do lado do `.exe`:
+
+```
+BalLeitor.exe
+res\caixa.ico
+```
+
+No Delphi, isso significa copiar a pasta `res` (com o `caixa.ico`) para
+dentro de `Win32\Debug` (ou `Win32\Release`) ao testar, do mesmo jeito
+que se faz com o arquivo de exemplo abaixo.
+
+Quer trocar a imagem? Basta substituir `res/caixa.ico` por outro `.ico`
+com o mesmo nome — não precisa mexer no código nem recompilar nada
+além do próprio programa.
 
 ## Testando
 
 1. Compile o projeto.
-2. Copie `exemplo/bal_20260909.txt` para a pasta do `.exe` compilado
-   (ex.: `Win32\Debug`).
+2. Copie `exemplo/bal_20260909.txt` e a pasta `res` (com `caixa.ico`)
+   para a pasta do `.exe` compilado (ex.: `Win32\Debug`).
 3. Rode o `.exe`, informe o intervalo (ex.: `1`) e confirme.
 4. Verifique se surgiu a pasta `Processados` com dois arquivos dentro:
    `bal_20260909.txt` (movido) e `bal_20260909.XXX` (gerado), além do
    `BalLeitor.log` registrando o processamento.
-5. Clique com o botão direito no ícone da bandeja e escolha
+5. Verifique se o ícone da caixinha apareceu na bandeja do sistema
+   (pode estar atrás da setinha "mostrar ícones ocultos").
+6. Clique com o botão direito no ícone da bandeja e escolha
    **Encerrar** para parar o programa.
 
 ## Observações / pontos de ajuste

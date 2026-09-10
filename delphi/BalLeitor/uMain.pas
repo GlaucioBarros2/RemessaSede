@@ -50,10 +50,20 @@ implementation
 { TfrmMain }
 
 procedure TfrmMain.FormCreate(Sender: TObject);
+var
+  cArqIcone: string;
 begin
   // Programa roda apenas pela bandeja do sistema, sem janela visivel
   Visible := False;
-  TrayIcon1.Icon := Application.Icon;
+
+  // Icone da bandeja: usa a imagem da caixinha (res\caixa.ico), se
+  // estiver junto do executavel; senao cai no icone padrao do app.
+  cArqIcone := TPath.Combine(TPath.Combine(ExtractFilePath(ParamStr(0)), 'res'), 'caixa.ico');
+  if TFile.Exists(cArqIcone) then
+    TrayIcon1.Icon.LoadFromFile(cArqIcone)
+  else
+    TrayIcon1.Icon := Application.Icon;
+
   TrayIcon1.Visible := True;
   FProcessando := False;
 end;
