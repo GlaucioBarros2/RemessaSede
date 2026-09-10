@@ -84,10 +84,13 @@ begin
 
   Log(Format('Programa iniciado. Pasta monitorada: %s | Intervalo: %d minuto(s).',
     [FPasta, nMinutos]));
-  TrayIcon1.ShowBalloonHint('BalLeitor',
-    Format('Monitorando "%s" a cada %d minuto(s).' + sLineBreak +
-           'Clique com o botao direito no icone para processar agora ou encerrar.',
-           [FPasta, nMinutos]));
+
+  TrayIcon1.BalloonTitle := 'BalLeitor';
+  TrayIcon1.BalloonHint := Format('Monitorando "%s" a cada %d minuto(s).' + sLineBreak +
+    'Clique com o botao direito no icone para processar agora ou encerrar.',
+    [FPasta, nMinutos]);
+  TrayIcon1.BalloonFlags := bfInfo;
+  TrayIcon1.ShowBalloonHint;
 
   VarrerPasta;
 end;
@@ -311,8 +314,12 @@ begin
     end;
 
     if nTotal > 0 then
-      TrayIcon1.ShowBalloonHint('BalLeitor',
-        Format('%d arquivo(s) processado(s).', [nTotal]));
+    begin
+      TrayIcon1.BalloonTitle := 'BalLeitor';
+      TrayIcon1.BalloonHint := Format('%d arquivo(s) processado(s).', [nTotal]);
+      TrayIcon1.BalloonFlags := bfInfo;
+      TrayIcon1.ShowBalloonHint;
+    end;
   finally
     FProcessando := False;
   end;
