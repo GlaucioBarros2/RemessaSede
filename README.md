@@ -139,3 +139,48 @@ Esses pontos estão marcados com comentários `// TODO SAFRA` no código
 O trailer de arquivo (registro 9) não precisou de bloco específico para
 o Safra: a fórmula já genérica (baseada em `Csequenc`) bate com o que o
 manual do Safra pede.
+
+# UnitImBoletoMes — Impressão do Boleto (Delphi 7)
+
+`delphi/ImBoletoMes/UnitImBoletoMes.pas` é a tela Delphi 7 que gera o PDF
+do boleto (via RaveReports) para o título informado, incluindo código de
+barras e linha digitável, hoje para Itaú e BB.
+
+## Suporte ao Banco Safra
+
+Foi adicionado suporte ao Safra (código `422`) **sem alterar nenhuma
+linha existente** do arquivo — toda a lógica de BB/Itaú permanece
+idêntica; apenas novos blocos `else if CODPOR = '422' then ...` foram
+inseridos ao lado dos já existentes. O layout visual (imagem do boleto,
+posições `PrintXY`, funções `Modulo10`/`CalcDigVerificador`/`PadL`) segue
+o mesmo padrão já usado para o Itaú, por pedido explícito; a única parte
+onde o Safra usa uma composição própria é a montagem do "campo livre" do
+código de barras (`GeraCodBarra2de5`), pois o layout real do Safra
+(`F + Agência(4) + Conta(10) + Nosso Número(9) + F`, conforme o manual
+"Cobrança Safra — Layout Padrão Safra CNAB 240", pág. 22) é diferente da
+composição usada pelo Itaú (`carteira + nosso número + DAC1 + agência +
+conta + DAC2 + "000"`) — usar a mesma fórmula do Itaú geraria um código
+de barras com 2 dígitos a menos que os 44 exigidos. A fatiamento da linha
+digitável (`LinhaDigitavel`), por ser puramente posicional (não depende
+do significado de cada sub-campo), foi reaproveitado exatamente igual ao
+do Itaú.
+
+**Pendências antes de usar em produção** (comentários `// TODO SAFRA` no
+código):
+
+- **`cAgSafra` / `cContaSafra`**: hoje são placeholders (`'0000'` /
+  `'0000000000'`) — substituir pelos dados reais da agência/conta do
+  convênio Safra.
+- **`cFLivreSafra1` / `cFLivreSafra2`**: os 2 dígitos de "uso livre" nas
+  posições 20 e 44 do código de barras não são documentados no manual;
+  estão fixos em `'0'` até confirmação com a mesa de implantação do
+  Safra.
+- **Novo campo no banco de dados**: o contador sequencial do nosso
+  número do Safra usa `DM.ATCadEm2NOSSONUM3` (mesmo papel de
+  `NOSSONUM`/`NOSSONUM2` para BB/Itaú) — esse campo precisa ser criado na
+  tabela `SACADEM2`/`UnitDM.pas` (não incluído aqui, pois não fazia parte
+  do arquivo enviado). **Sem esse campo o projeto não compila.**
+- O nosso número do Safra usa 9 dígitos (prefixo `"422"` + 6 dígitos
+  sequenciais), a mesma convenção usada em `REMESSA.PRG` — o boleto
+  impresso precisa espelhar exatamente o que vai na remessa, por isso a
+  largura aqui é 6 (e não 8 como no Itaú).
