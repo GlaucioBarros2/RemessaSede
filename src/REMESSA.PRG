@@ -560,11 +560,13 @@ elseif cBanco1 == "341"
   cAgen := "08322 "
   cCont := "000000011901 "
 else
-  // TODO SAFRA: preencher com os dados reais do convenio Safra (cedente),
-  // agencia e conta corrente fornecidos pelo banco antes de usar em producao.
-  cConv := space(7)     // codigo do cedente/convenio Safra
-  cAgen := "00000 "     // agencia Safra (4 digitos + branco, ajustar conforme manual)
-  cCont := "000000000000 "  // conta corrente + DV Safra
+  // TODO SAFRA: preencher com os dados reais da conta de cobranca Safra
+  // (agencia, conta corrente e respectivo digito verificador) antes de
+  // usar em producao. Larguras conforme manual "Cobranca Safra - Layout
+  // Padrao Safra CNAB 240": agencia 5 digitos, conta 12 digitos, DV 1 digito.
+  cAgenSaf   := "00000"          // agencia (5 digitos)
+  cContSaf   := "000000000000"   // conta corrente (12 digitos)
+  cContDVSaf := "0"              // digito verificador da conta corrente
 endif
 
 // header de arquivo - registro 0
@@ -626,34 +628,35 @@ elseif cBanco1 = "341"
              SPACE(54)+;
              "000"+;
              SPACE(12)
-else  // SAFRA (422) - layout padrao FEBRABAN CNAB240, TODO: confirmar versao
-      // de layout e campos reservados com o manual tecnico do Safra
-  mregrem := cBanco1+;
-             "0000"+;
-             "0"+;
-             space(9)+;
-             "2"+;
-             "40868234000170"+;
-             space(20)+;
-             cAgen+;
-             cCont+;
-             "0"+;
-             "SEDE DAS MIUDEZAS ATACADO LTDA"+;
-             cBanco2+;
-             space(10)+;
-             "1"+;
-             SUBST(DTOC(ddataatu),1,2)+;
+else  // SAFRA (422) - layout conforme manual "Cobranca Safra - Layout Padrao
+      // Safra CNAB 240" (Header de Arquivo, pag. 5-6)
+  mregrem := cBanco1+;                          // 001-003 Banco = 422
+             "0000"+;                           // 004-007 Lote de servico
+             "0"+;                              // 008     Tipo de registro = 0
+             space(9)+;                         // 009-017 Uso exclusivo - brancos
+             "2"+;                              // 018     Tipo insc. empresa = 2 (CNPJ)
+             "40868234000170"+;                 // 019-032 CNPJ da empresa
+             space(20)+;                        // 033-052 Convenio - Safra nao trata
+             cAgenSaf+;                         // 053-057 Agencia mantenedora da conta
+             " "+;                              // 058     DV agencia - em branco
+             cContSaf+;                         // 059-070 Numero da conta corrente
+             cContDVSaf+;                       // 071     DV da conta
+             " "+;                              // 072     DV ag/conta - em branco
+             "SEDE DAS MIUDEZAS ATACADO LTDA"+; // 073-102 Nome da empresa
+             "BANCO SAFRA S/A               "+; // 103-132 Nome do banco (30)
+             space(10)+;                        // 133-142 Uso exclusivo - brancos
+             "1"+;                              // 143     Codigo remessa = 1
+             SUBST(DTOC(ddataatu),1,2)+;        // 144-151 Data de geracao (DDMMAAAA)
              SUBST(DTOC(ddataatu),4,2)+;
              SUBST(DTOS(ddataatu),1,4)+;
-             SUBST(TIME(),1,2)+;
-             SUBST(TIME(),4,2)+;
-             SUBST(TIME(),7,2)+;
-             "000001"+;
-             "040"+;
-             "00000"+;
-             SPACE(54)+;
-             "000"+;
-             SPACE(12)
+             "000000"+;                         // 152-157 Hora de geracao - manual pede "000000"
+             "000001"+;                         // 158-163 Numero sequencial do arquivo
+             "084"+;                            // 164-166 TODO SAFRA: versao do layout - opcoes
+                                                 // validas 084/087/103, confirmar com o banco
+             "00000"+;                          // 167-171 Densidade de gravacao (opcional)
+             SPACE(20)+;                        // 172-191 Uso reservado do banco
+             SPACE(20)+;                        // 192-211 Uso reservado da empresa
+             SPACE(29)                          // 212-240 Uso exclusivo - brancos
 endif
 
 ARQ->( DBAPPEND() )
@@ -714,36 +717,33 @@ elseif cBanco1 = "341"
              SUBST(DTOC(ddataatu),4,2)+;
              SUBST(DTOS(ddataatu),1,4)+;
              SPACE(33)
-else  // SAFRA (422) - TODO: substituir "0000"/"00000" pela agencia/conta
-      // reais fornecidas pelo Safra (mesma posicao usada pelo Itau acima)
-  mregrem := cBanco1+;
-             "0001"+;
-             "1"+;
-             "R"+;
-             "01"+;
-             "00"+;
-             "030"+;
-             " "+;
-             "2"+;
-             "040868234000170"+;
-             space(20)+;
-             "0"+;
-			 "0000"+;
-             " "+;
-             "0000000"+;
-			 "00000"+;
-             " "+;
-             "0"+;
-             "SEDE DAS MIUDEZAS ATACADO LTDA"+;
-             space(80)+;
-             "00000001"+;
-             SUBST(DTOC(ddataatu),1,2)+;
+else  // SAFRA (422) - layout conforme manual "Cobranca Safra - Layout Padrao
+      // Safra CNAB 240" (Header de Lote, pag. 7-8)
+  mregrem := cBanco1+;                          // 001-003 Banco = 422
+             "0001"+;                           // 004-007 Lote do servico
+             "1"+;                              // 008     Tipo de registro = 1
+             "R"+;                              // 009     Tipo de operacao = R (remessa)
+             "01"+;                             // 010-011 Tipo de servico = 01 (cobranca)
+             space(2)+;                         // 012-013 Uso exclusivo - brancos
+             "060"+;                            // 014-016 Versao do layout do lote
+             " "+;                              // 017     Uso exclusivo - branco
+             "2"+;                              // 018     Tipo insc. empresa = 2 (CNPJ)
+             "0"+"40868234000170"+;             // 019-033 CNPJ da empresa
+             space(20)+;                        // 034-053 Convenio - Safra nao trata
+             cAgenSaf+;                         // 054-058 Agencia mantenedora da conta
+             " "+;                              // 059     DV agencia - em branco
+             cContSaf+;                         // 060-071 Numero da conta corrente
+             cContDVSaf+;                       // 072     DV da conta
+             " "+;                              // 073     DV ag/conta - em branco
+             "SEDE DAS MIUDEZAS ATACADO LTDA"+; // 074-103 Nome da empresa
+             space(40)+;                        // 104-143 Mensagem 1 - Safra nao trata
+             space(40)+;                        // 144-183 Mensagem 2 - Safra nao trata
+             "00000001"+;                       // 184-191 Numero remessa (seq. do lote)
+             SUBST(DTOC(ddataatu),1,2)+;        // 192-199 Data de gravacao da remessa
              SUBST(DTOC(ddataatu),4,2)+;
              SUBST(DTOS(ddataatu),1,4)+;
-             SUBST(DTOC(ddataatu),1,2)+;  // data do credito
-             SUBST(DTOC(ddataatu),4,2)+;
-             SUBST(DTOS(ddataatu),1,4)+;
-             SPACE(33)
+             "00000000"+;                       // 200-207 Data do credito - manual pede zeros
+             SPACE(33)                          // 208-240 Uso exclusivo - brancos
 endif
 
 ARQ->( DBAPPEND() )
@@ -761,8 +761,10 @@ WHILE AUX->( !EOF() )
   if AUX->marca # "*" .or. ;
      (cBanco1 == "001" .and. left(TIT->nossonum,3) # "140").or.;
      (cBanco1 == "341" .and. left(TIT->nossonum,3) # "109").or.;
-     (cBanco1 == "422" .and. left(TIT->nossonum,3) # "422")  // TODO SAFRA: confirmar o
-                                                              // prefixo usado no nosso numero
+     (cBanco1 == "422" .and. left(TIT->nossonum,3) # "422")  // convencao interna: nosso
+                                                              // numero Safra = prefixo "422"
+                                                              // + 6 digitos sequenciais (9
+                                                              // digitos livres, ver manual)
     AUX->( dbskip() )
     loop
   endif
@@ -919,62 +921,66 @@ mregrem := cBanco1+;   					// 1-3
 
 	nTotCobSim += TIT->VALBRUTO
     nQtdCobSim++
-  else  // SAFRA (422)
-  // TODO SAFRA: DIGITOMOD11() abaixo usa o Modulo 11 padrao FEBRABAN como
-  // "melhor palpite" na ausencia do manual tecnico do Safra. Confirmar o
-  // algoritmo real do DV do nosso numero (pode ser Modulo 10 ou Modulo 11
-  // com regras proprias) antes de usar este arquivo em producao. Da mesma
-  // forma, "0000"/"00000" (agencia/conta) e a carteira "01" sao placeholders
-  // a substituir pelos dados reais do convenio Safra.
-  cNossoN := alltrim(TIT->NOSSONUM)+DIGITOMOD11("0000"+"00000"+"422"+subst(TIT->NOSSONUM,4,8))
+  else  // SAFRA (422) - layout conforme manual "Cobranca Safra - Layout Padrao
+        // Safra CNAB 240" (Segmento P, pag. 9-12). Cobranca DIRETA (a
+        // empresa emite o proprio boleto), pois o "nosso numero" abaixo e'
+        // um valor real gerado pelo sistema (na Cobranca Convencional o
+        // manual pede 000000000 nas posicoes 38-46, devolvido pelo banco
+        // no retorno). O manual confirma que o "nosso numero" Safra e'
+        // LIVRE (9 digitos escolhidos pela empresa, sem digito verificador
+        // calculado pelo banco) - por isso nao ha calculo de DV aqui.
+  cNossoN := LEFT(alltrim(TIT->NOSSONUM)+SPACE(9),9)  // 9 digitos livres (ex.: prefixo 422 + sequencial)
 
-mregrem := cBanco1+;   					// 1-3
-             "0001"+;					// 4-7
-             "3"+;						// 8
-             strzero(++Csequenc,5)+;	// 9-13
-             "P"+;						// 14-14
-             " "+;						// 15-15
-             cCodMov+;					// 16-17
-             "0"+;						// 18-18
-			 "0000"+;					// 19-22  TODO SAFRA: agencia
-             " "+;						// 23
-             "0000000"+;				// 24-30
-			 "00000"+;					// TODO SAFRA: conta corrente
-			 " "+;
-			 "0"+;
-             cNossoN+;
-			 space(8)+;
-			 "00000"+;
+mregrem := cBanco1+;   					// 001-003 Banco = 422
+             "0001"+;					// 004-007 Lote do servico
+             "3"+;						// 008     Tipo de registro = 3
+             strzero(++Csequenc,5)+;	// 009-013 Numero sequencial de registro no lote
+             "P"+;						// 014     Segmento = P
+             " "+;						// 015     Uso exclusivo - branco
+             cCodMov+;					// 016-017 Codigo de movimento remessa
+             cAgenSaf+;					// 018-022 Agencia mantenedora da conta
+             " "+;						// 023     DV agencia - em branco
+             cContSaf+;					// 024-035 Numero da conta corrente
+             cContDVSaf+;				// 036     DV da conta
+             " "+;						// 037     DV ag/conta - em branco
+             cNossoN+;					// 038-046 Identificacao do titulo no banco (livre, 9 digitos)
+			 space(11)+;				// 047-057 Uso exclusivo Safra - em branco
+             "1"+;						// 058     Carteira = 1 (Cobranca Simples)
+             "1"+;						// 059     Forma de cadastro = 1 (Cobranca Registrada)
+             "2"+;						// 060     Tipo de documento = 2 (Escritural)
+             "2"+;						// 061     TODO SAFRA: emissao do bloqueto - 2 = cliente emite (confirmar)
+             "2"+;						// 062     TODO SAFRA: distribuicao do bloqueto - 2 = cliente distribui (confirmar)
              TIT->NUMMOV+SPACE(2)+;
-			 space(5)+;
+			 space(5)+;					// 063-077 Numero do documento de cobranca (10 uteis + 5 brancos)
              SUBST(DTOC(TIT->DTVENCLIM),1,2)+;
              SUBST(DTOC(TIT->DTVENCLIM),4,2)+;
-             SUBST(DTOS(TIT->DTVENCLIM),1,4)+;
-             STUFF(STRZERO(TIT->VALBRUTO,16,2),14,1,"")+;
-			 "00000"+;
-             "0"+;
-			 "01"+;   // TODO SAFRA: codigo da carteira
-			 "N"+;
+             SUBST(DTOS(TIT->DTVENCLIM),1,4)+;	// 078-085 Data de vencimento do titulo
+             STUFF(STRZERO(TIT->VALBRUTO,16,2),14,1,"")+;	// 086-100 Valor nominal do titulo
+			 cAgenSaf+;					// 101-105 Agencia encarregada da cobranca (mesma da 018-022)
+             " "+;						// 106     DV agencia - em branco
+			 "99"+;						// 107-108 Especie do titulo = 99 (Outros)
+			 "N"+;						// 109     Titulo nao aceito
              SUBST(DTOC(TIT->DTEMISS),1,2)+;
              SUBST(DTOC(TIT->DTEMISS),4,2)+;
-             SUBST(DTOS(TIT->DTEMISS),1,4)+;
-			 "0"+;
-             SUBST(DTOC(TIT->DTVENCLIM),1,2)+;
-             SUBST(DTOC(TIT->DTVENCLIM),4,2)+;
-             SUBST(DTOS(TIT->DTVENCLIM),1,4)+;
-             STUFF(STRZERO(cJurDia,16,2),14,1,"")+;
-             IF(cDesFin > 0,"1","0")+;
-             IF(cDesFin > 0,dVencAnt,"00000000")+;
-             IF(cDesFin > 0,STUFF(STRZERO(cDesFin,16,2),14,1,""),"000000000000000")+;
-             "000000000000000"+;
-             "000000000000000"+;
-             TIT->NUMMOV+SPACE(17)+;
-             IF(ccodmov="09","1","0")+;
-             IF(ccodmov="09",strzero(cli->diasprot,2),"00")+;
-			 "0"+;
-			 "01"+;
-             "0000000000000"+;
-             SPACE(1)
+             SUBST(DTOS(TIT->DTEMISS),1,4)+;	// 110-117 Data de emissao do titulo
+			 IF(cJurDia > 0,"1","3")+;	// 118     Codigo do juros de mora (1=valor/dia, 3=isento)
+             IF(cJurDia > 0,;
+                SUBST(DTOC(TIT->DTVENCLIM+1),1,2)+SUBST(DTOC(TIT->DTVENCLIM+1),4,2)+SUBST(DTOS(TIT->DTVENCLIM+1),1,4),;
+                "00000000")+;			// 119-126 Data do juros de mora (TODO SAFRA: confirmar se e' vencto+1)
+             STUFF(STRZERO(cJurDia,16,2),14,1,"")+;	// 127-141 Valor do juros de mora por dia
+             IF(cDesFin > 0,"1","0")+;	// 142     Codigo do desconto
+             IF(cDesFin > 0,dVencAnt,"00000000")+;		// 143-150 Data do desconto
+             IF(cDesFin > 0,STUFF(STRZERO(cDesFin,16,2),14,1,""),"000000000000000")+;	// 151-165 Valor do desconto
+             "000000000000000"+;		// 166-180 Valor do IOF (zeros - nao seguradora)
+             "000000000000000"+;		// 181-195 Valor do abatimento (Safra nao aceita na entrada)
+             TIT->NUMMOV+SPACE(17)+;	// 196-220 Identificacao do titulo na empresa (uso livre)
+             IF(ccodmov="09","1","3")+;	// 221     Codigo p/ protesto (1=dias corridos, 3=nao protestar)
+             IF(ccodmov="09",strzero(cli->diasprot,2),"00")+;	// 222-223 Numero de dias para protesto
+			 "2"+;						// 224     TODO SAFRA: codigo baixa/devolucao - 2 = nao baixar (confirmar)
+			 "000"+;					// 225-227 Numero de dias para baixa/devolucao
+             "09"+;						// 228-229 Codigo da moeda = 09 (Real)
+             "0000000000"+;				// 230-239 Numero do contrato de operacao de credito
+             "1"						// 240     TODO SAFRA: uso livre - 1 = nao autoriza pagto parcial (confirmar)
 
 	nTotCobSim += TIT->VALBRUTO
     nQtdCobSim++
@@ -1059,7 +1065,7 @@ if cBanco1 = "001"
              STRZERO(Csequenc+2,6)+;
              REPL("0",92)+;
              SPACE(125)
-else
+elseif cBanco1 = "341"
   mregrem := cBanco1+;
              "0001"+;
              "5"+;
@@ -1072,6 +1078,28 @@ else
              REPL("0",46)+;
 			 "00000000"+;
              SPACE(117)
+	nTotCobSim += TIT->VALBRUTO
+    nQtdCobSim++
+else  // SAFRA (422) - layout conforme manual "Cobranca Safra - Layout Padrao
+      // Safra CNAB 240" (Trailer de Lote, pag. 16-18). Diferente de BB/Itau,
+      // o campo 018-023 conta APENAS os registros de detalhe (P/Q/R), sem
+      // somar os registros de header/trailer de lote - por isso nao soma "+2"
+      // aqui.
+  mregrem := cBanco1+;                          // 001-003 Banco = 422
+             "0001"+;                           // 004-007 Lote do servico
+             "5"+;                              // 008     Tipo de registro = 5
+             SPACE(9)+;                         // 009-017 Uso exclusivo - brancos
+             STRZERO(Csequenc,6)+;              // 018-023 Qtde de registros detalhe (P+Q) do lote
+             STRZERO(nQtdCobSim,6)+;            // 024-029 Qtde de titulos em cobranca simples
+             STUFF(STRZERO(nTotCobSim,18,2),16,1,"")+;	// 030-046 Valor total (simples)
+             STRZERO(0,6)+;                     // 047-052 Qtde de titulos em cobranca vinculada
+             STUFF(STRZERO(0.00,18,2),16,1,"")+;	// 053-069 Valor total (vinculada)
+             "000000"+;                         // 070-075 Qtde titulos caucionada - Safra nao trata
+             STUFF(STRZERO(0.00,18,2),16,1,"")+;	// 076-092 Valor total (caucionada) - Safra nao trata
+             "000000"+;                         // 093-098 Qtde titulos descontada - Safra nao trata
+             SPACE(17)+;                        // 099-115 Valor total titulos - deixar em branco
+             SPACE(8)+;                         // 116-123 Numero de aviso do lancamento - em branco
+             SPACE(117)                         // 124-240 Uso exclusivo - brancos
 	nTotCobSim += TIT->VALBRUTO
     nQtdCobSim++
 endif
@@ -1166,36 +1194,6 @@ if Resto = 0
   RETURN('0')
 else
   RETURN(str(10 - Resto,1))
-endif
-
-FUNC DIGITOMOD11(NossoNum)
-**************************
-// TODO SAFRA: implementa o calculo de DV pelo Modulo 11 padrao FEBRABAN,
-// usado aqui como "melhor palpite" para o nosso numero do Banco Safra na
-// AUSENCIA do manual tecnico do banco. O Safra pode usar Modulo 10 (igual
-// a funcao DIGITO() acima) ou regras proprias de Modulo 11 (ex.: DV "P"
-// quando o resto da 10, ou DV "0" quando o resto da 0 ou 1). CONFIRMAR
-// com o manual de instrucoes CNAB240 do Safra antes de usar em producao.
-Peso := 2
-Somatoria := 0
-for i := Len(NossoNum) to 1 STEP -1
-  Somatoria += val(Subst(NossoNum,i,1)) * Peso
-
-  if Peso = 7
-    Peso := 2
-  else
-    Peso++
-  endif
-next
-
-Resto := MOD(Somatoria,11)
-
-if Resto = 0 .or. Resto = 1
-  RETURN('0')
-elseif Resto = 10
-  RETURN('0')     // TODO SAFRA: alguns bancos usam "P" para resto 10 - confirmar
-else
-  RETURN(str(11 - Resto,1))
 endif
 
 FUNCTION MENSAGEM(mensagem)

@@ -74,35 +74,68 @@ arquivo, header de lote, segmentos P/Q, trailers).
 
 ## Sobre o suporte ao Banco Safra
 
-O bloco do Safra foi implementado espelhando a estrutura já existente
-para Itaú/BB (mesmo padrão de `if cBanco1 = "001" / elseif "341" / else`
-em cada registro do CNAB240: header de arquivo, header de lote, segmento
-P e cálculo do dígito verificador do nosso número). Como não havia à
-disposição o manual de instruções técnico do Safra nem os dados reais do
-convênio, os seguintes pontos ficam com **valores placeholder** e
-comentários `// TODO SAFRA` no código, para revisão antes de uso em
-produção:
+O bloco do Safra foi implementado com base no manual oficial **"Cobrança
+Safra — Guia para implantação de transmissão e troca de arquivos —
+Layout padrão Safra CNAB 240"**, posição a posição, seguindo o mesmo
+padrão estrutural já usado para Itaú/BB (`if cBanco1 = "001" / elseif
+"341" / else` em cada registro: header de arquivo, header de lote,
+segmento P; o segmento Q já era genérico e vale para os três bancos).
 
-- **Convênio/agência/conta** (`cConv`, `cAgen`, `cCont` no bloco do
-  Safra dentro de `GER_ARQUIVO()`, e os campos correspondentes no header
-  de lote e no segmento P) — hoje preenchidos com zeros/brancos.
-- **Código da carteira** usado no segmento P (`"01"` fixo) — deve ser
-  confirmado com o banco.
-- **Prefixo do nosso número** (`"422"`), usado apenas internamente pelo
-  programa para filtrar quais títulos pertencem à carteira Safra dentro
-  da tabela `SACADTIT` (mesma lógica hoje usada com `"140"` para BB e
-  `"109"` para Itaú) — pode ser ajustado para outro valor se a empresa
-  preferir outra convenção.
-- **Dígito verificador do nosso número**: foi criada a função
-  `DIGITOMOD11()`, que aplica o Módulo 11 padrão FEBRABAN (pesos 2 a 7,
-  cíclicos) como "melhor palpite" na ausência do manual do Safra. O
-  Safra pode usar Módulo 10 (a mesma função `DIGITO()` já usada para o
-  Itaú) ou regras próprias de Módulo 11 (por exemplo, DV `"P"` quando o
-  resto da divisão é 10). **Confirme o algoritmo correto com o manual
-  técnico CNAB240 do Safra antes de gerar remessas reais.**
+### Confirmado pelo manual (já implementado com os valores corretos)
 
-Os registros que já eram genéricos/independentes de banco (segmento Q,
-trailer de lote — registro 5 — e trailer de arquivo — registro 9) não
-precisaram de bloco específico para o Safra: eles usam as mesmas
-variáveis (`cBanco1`, totais calculados dinamicamente) e já funcionam
-para qualquer banco selecionado.
+- Header de Arquivo (registro 0) e Header de Lote (registro 1): CNPJ,
+  nome da empresa, "BANCO SAFRA S/A", código remessa, datas, número
+  sequencial, versão do layout do lote (`060`), hora de geração fixa em
+  `000000` (o manual pede explicitamente, ao contrário de BB/Itaú que
+  usam a hora real) e data do crédito fixa em `00000000`.
+- Segmento P: carteira `1` (Cobrança Simples), forma de cadastro `1`
+  (Cobrança Registrada), tipo de documento `2` (Escritural), espécie do
+  título `99` (Outros — mesma convenção já usada no bloco do Itaú),
+  moeda `09` (Real), IOF e abatimento zerados (Safra não aceita
+  abatimento na entrada do título), código de juros/desconto conforme
+  haja ou não `cJurDia`/`cDesFin` calculados.
+- **Nosso Número**: o manual confirma que no Safra ele é **livre** — 9
+  dígitos escolhidos pela empresa (posições 38 a 46 do segmento P), sem
+  nenhum dígito verificador calculado pelo banco (isso só existe na
+  "Cobrança Convencional", onde o próprio Safra emite o boleto e
+  preenche zeros nessas posições). Por isso **não há função de DV**
+  para o Safra (a tentativa anterior com Módulo 11 foi removida por não
+  ser necessária). O programa usa como nosso número os 9 caracteres do
+  campo `TIT->NOSSONUM`, na mesma convenção interna já usada para os
+  outros bancos: prefixo `"422"` + 6 dígitos sequenciais.
+- Trailer de Lote (registro 5): ao contrário do bloco do Itaú/BB
+  (que soma "+2" ao total de registros do lote), o manual do Safra diz
+  que a contagem em 018-023 é **só** dos registros de detalhe (segmentos
+  P/Q/R) — por isso o Safra tem sua própria fórmula sem o "+2".
+
+### Ainda como placeholder — TODO antes de produção
+
+- **Agência, conta corrente e dígito verificador da conta**
+  (`cAgenSaf`, `cContSaf`, `cContDVSaf`, definidos em `GER_ARQUIVO()`) —
+  hoje zerados; preencher com os dados reais do convênio Safra.
+- **Versão do layout do arquivo** (posições 164-166 do header de
+  arquivo): o manual lista 3 opções válidas (`084`, `087` ou `103`) sem
+  indicar qual usar — o código está com `"084"`, a confirmar com a Mesa
+  de Implantação do Safra.
+- **Modalidade de cobrança** (Convencional × Direta): o código assume
+  **Cobrança Direta** (a empresa emite e distribui o próprio boleto,
+  como já é feito hoje para Itaú/BB), preenchendo "Identificação da
+  Emissão do Bloqueto" (pos. 61) e "Identificação da Distribuição" (pos.
+  62) com `"2"` (cliente). Se a empresa for operar em Cobrança
+  Convencional (Safra emite o boleto), essas posições mudam para `"1"`
+  e o nosso número (posições 38-46) deve ser preenchido com zeros.
+- **Código para Baixa/Devolução** (posição 224): está em `"2"` (não
+  baixar e não devolver) como opção conservadora — ajustar para `"1"`
+  (baixar e devolver) e preencher a quantidade de dias (posições
+  225-227, hoje `"000"`) se a empresa quiser que o Safra baixe
+  automaticamente títulos não pagos.
+- **Uso livre banco/empresa** (posição 240): está em `"1"` (não
+  autoriza pagamento parcial) — ajustar para `"2"` se a empresa quiser
+  autorizar pagamento parcial dos títulos.
+
+Esses pontos estão marcados com comentários `// TODO SAFRA` no código
+(em `src/REMESSA.PRG`).
+
+O trailer de arquivo (registro 9) não precisou de bloco específico para
+o Safra: a fórmula já genérica (baseada em `Csequenc`) bate com o que o
+manual do Safra pede.
