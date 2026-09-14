@@ -8,6 +8,7 @@ uses
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus;
 
 const
+  PASTA_PADRAO      = 'F:\DataNet\Balanco\';
   MASCARA_ENTRADA   = 'bal_*.txt';
   EXTENSAO_SAIDA    = '.XXX';
   PASTA_PROCESSADOS = 'Processados';
@@ -80,10 +81,13 @@ end;
 -------------------------------------------------------------------------}
 procedure TfrmMain.IniciarMonitoramento(nMinutos: Integer);
 begin
+  // Pasta monitorada: fixa em F:\DataNet\Balanco (ver PASTA_PADRAO), a
+  // menos que outra pasta seja informada por parametro de linha de
+  // comando (util para testes fora do servidor de producao).
   if ParamCount >= 1 then
     FPasta := IncludeTrailingPathDelimiter(ParamStr(1))
   else
-    FPasta := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0)));
+    FPasta := PASTA_PADRAO;
 
   TrayIcon1.Hint := 'BalLeitor - Balanco de Estoque' + sLineBreak +
     'Pasta: ' + FPasta + sLineBreak +

@@ -66,13 +66,21 @@ sede.daniel;2026/09/09 11:15;2026/09/09 11:20
 
 ## Pasta monitorada
 
-Por padrão, o programa monitora a **pasta onde o `.exe` está**. Se
-quiser apontar para outra pasta, crie um atalho para o `.exe` e
-informe o caminho como parâmetro, por exemplo:
+Por padrão, o programa monitora **`F:\DataNet\Balanco`** (constante
+`PASTA_PADRAO` em `uMain.pas`) — é lá que os `bal_*.txt` devem ser
+colocados. O `.XXX` gerado e o `.txt` original movido vão para
+**`F:\DataNet\Balanco\Processados`**.
+
+Para testar em outra pasta (numa máquina onde `F:\DataNet\Balanco` não
+existe, por exemplo), informe o caminho como parâmetro ao rodar o
+`.exe`:
 
 ```
 BalLeitor.exe C:\Balanca\Arquivos
 ```
+
+Nesse caso o programa usa a pasta informada em vez da padrão, e
+`Processados` é criada dentro dela.
 
 ## Compilando
 
@@ -118,15 +126,23 @@ além do próprio programa.
 ## Testando
 
 1. Compile o projeto.
-2. Copie `exemplo/bal_20260909.txt` e a pasta `res` (com `caixa.ico`)
-   para a pasta do `.exe` compilado (ex.: `Win32\Debug`).
-3. Rode o `.exe`, informe o intervalo (ex.: `1`) e confirme.
-4. Verifique se surgiu a pasta `Processados` com dois arquivos dentro:
-   `bal_20260909.txt` (movido) e `bal_20260909.XXX` (gerado), além do
-   `BalLeitor.log` registrando o processamento.
-5. Verifique se o ícone da caixinha apareceu na bandeja do sistema
+2. Copie a pasta `res` (com `caixa.ico`) para a pasta do `.exe`
+   compilado (ex.: `Win32\Debug`) — é daí que o ícone da bandeja é
+   carregado, independente da pasta monitorada.
+3. Para os arquivos de retorno, você tem duas opções:
+   - **Testar na pasta padrão**: crie `F:\DataNet\Balanco` na sua
+     máquina e copie `exemplo/bal_20260909.txt` para lá; ou
+   - **Testar em outra pasta**: copie `exemplo/bal_20260909.txt` para
+     qualquer pasta e rode `BalLeitor.exe <pasta>` informando o
+     caminho como parâmetro.
+4. Rode o `.exe`, informe o intervalo (ex.: `1`) e confirme.
+5. Verifique se surgiu a pasta `Processados` (dentro da pasta
+   monitorada) com dois arquivos: `bal_20260909.txt` (movido) e
+   `bal_20260909.XXX` (gerado), além do `BalLeitor.log` (na pasta do
+   `.exe`) registrando o processamento.
+6. Verifique se o ícone da caixinha apareceu na bandeja do sistema
    (pode estar atrás da setinha "mostrar ícones ocultos").
-6. Clique com o botão direito no ícone da bandeja e escolha
+7. Clique com o botão direito no ícone da bandeja e escolha
    **Encerrar** para parar o programa.
 
 ## Observações / pontos de ajuste
