@@ -184,3 +184,33 @@ código):
   sequenciais), a mesma convenção usada em `REMESSA.PRG` — o boleto
   impresso precisa espelhar exatamente o que vai na remessa, por isso a
   largura aqui é 6 (e não 8 como no Itaú).
+
+## Template visual do boleto (`boleto 2v SAFRA.bmp`)
+
+`delphi/ImBoletoMes/boleto 2v SAFRA.bmp` é a imagem de fundo impressa por
+`Bitmap.LoadFromFile('C:\boleto 2v SAFRA.bmp')` (já ligada ao código em
+`UnitImBoletoMes.pas` para `CODPOR = '422'`). Foi **gerada do zero**
+programaticamente (não é uma edição pixel a pixel do `boleto 2v ITAU.bmp`
+original, que não chegou a ser enviado como arquivo), reproduzindo a
+mesma estrutura de tabela/campos do template do Itaú, com:
+
+- Logomarca do Safra (brasão + "Safra") reconstruída a partir da imagem
+  de logo enviada — é uma **aproximação vetorial**, não um recorte
+  exato da arte oficial do banco.
+- "Banco Safra S/A" no lugar de "Banco Itaú S/A".
+- Código "**422-7**" no lugar de "341-7" (código do banco na
+  compensação + dígito verificador, conferido pelo algoritmo padrão
+  FEBRABAN).
+- "ATE O VENCIMENTO PAGUE PREFERENCIALMENTE NO SAFRA" no lugar de
+  "...NO ITAU".
+- Todos os demais campos (Local de Pagamento, Beneficiário, Agência/
+  Código Cedente, Nosso Número, Carteira, Instruções, Pagador, etc.)
+  seguem o padrão FEBRABAN, idênticos ao template do Itaú.
+
+**Antes de usar em produção**: copiar o arquivo para `C:\boleto 2v
+SAFRA.bmp` na máquina onde o `UnitImBoletoMes` roda (mesmo diretório
+onde hoje ficam `boleto 2v BB.bmp` e `boleto 2v ITAU.bmp`), e revisar
+visualmente o resultado impresso — como foi reconstruído do zero, vale
+comparar lado a lado com um boleto real do Safra e, se a área do banco
+tiver a arte oficial da logo em alta resolução, trocar a logo
+reconstruída pela original.

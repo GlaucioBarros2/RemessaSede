@@ -79,6 +79,10 @@ uses UnitDM, DB;
 //      convencao usada em REMESSA.PRG) - o boleto deve espelhar exatamente
 //      o que vai na remessa, por isso a largura aqui e' 6 (e nao 8 como
 //      no Itau).
+//   5) A imagem 'boleto 2v SAFRA.bmp' (mesmo layout do 'boleto 2v ITAU.bmp',
+//      com logo/nome/codigo 422-7 do Safra) precisa ser copiada para
+//      C:\ na maquina onde este programa roda, igual ja e' feito hoje
+//      com 'boleto 2v BB.bmp' e 'boleto 2v ITAU.bmp'.
 const
   cAgSafra      = '0000';        // TODO SAFRA: agencia real (4 digitos)
   cContaSafra   = '0000000000';  // TODO SAFRA: conta corrente real (10 digitos)
@@ -172,6 +176,8 @@ begin
       try
         if DM.ATCadTitCODPOR.AsString = '001' then
           Bitmap.LoadFromFile('C:\boleto 2v BB.bmp')
+        else if DM.ATCadTitCODPOR.AsString = '422' then
+          Bitmap.LoadFromFile('C:\boleto 2v SAFRA.bmp')
         else
           Bitmap.LoadFromFile('C:\boleto 2v ITAU.bmp');
 
