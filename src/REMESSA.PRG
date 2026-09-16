@@ -12,17 +12,17 @@ enter   := ". Tecle [ENTER]"
 centra("Selecione o Banco Desejado ")
 @ 02,08 TO 06,58
 @ 03,10 PROM " BANCO ITAU SA                                  "
-@ 04,10 PROM " BANCO DO BRASIL                                "
-@ 05,10 PROM " BANCO SAFRA SA                                 "
+@ 04,10 PROM " BANCO SAFRA SA                                 "
+@ 05,10 PROM " BANCO DO BRASIL                                "
 MENU TO opcaoB
 if opcaoB== 0
    CLS ; RETURN
 ENDIF
 
 cls
-cBanco1 := if(opcaob=1,"341",if(opcaob=2,"001","422"))
+cBanco1 := if(opcaob=1,"341",if(opcaob=2,"422","001"))
 cBanco2 := if(opcaob=1,"BANCO ITAU SA                 ",;
-           if(opcaob=2,"BANCO DO BRASIL               ","BANCO SAFRA SA                "))
+           if(opcaob=2,"BANCO SAFRA SA                ","BANCO DO BRASIL               "))
 
 @ 00,25 say cbanco2
 
@@ -163,7 +163,7 @@ if cCodMov $ "01"  // Entrada de Titulos
        (cli->remess $ "S ") .and. (tit->tipodoc$"DP,DC,OR") .and. (TIT->CODPOR = cBanco1) .and.;
        (("Entr Rejeit"$tit->retbanco) .or. empty(tit->retbanco))
 	   
-      GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
+      GRAVAAUX()   // pega o titulo e cadastra no auxiliar para mostragem
 	  
     ENDIF
     TIT->(DBSKIP())
@@ -190,7 +190,7 @@ elseif cCodMov $ "09"  // protestar
       (tit->tipodoc$"DP,DC,OR") .and.;
       (left(tit->retbanco,13) $ cTipoRem)
 	   
-      GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
+      GRAVAAUX()   // pega o titulo e cadastra no auxiliar para mostragem
 	  
     ENDIF
     TIT->(DBSKIP())
@@ -209,7 +209,7 @@ elseif cCodMov $ "02"  // pedido de baixa
         (tit->tipodoc$"DP,DC,OR") .and.(!empty(tit->retbanco)).and.;
                                     (!left(tit->retbanco,13)$cTipoRem)
 	   
-        GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
+        GRAVAAUX()   // pega o titulo e cadastra no auxiliar para mostragem
 	  
       ENDIF
       TIT->(DBSKIP())
@@ -224,7 +224,7 @@ elseif cCodMov $ "02"  // pedido de baixa
           (tit->tipodoc$"DP,DC,OR") .and.(!empty(tit->retbanco)).and.;
           (!left(tit->retbanco,13)$cTipoRem)
 	   
-          GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
+          GRAVAAUX()   // pega o titulo e cadastra no auxiliar para mostragem
 	  
         ENDIF
         TIT->(DBSKIP())
@@ -239,7 +239,7 @@ elseif cCodMov $ "02"  // pedido de baixa
           (tit->tipodoc$"DP,DC,OR") .and.(!empty(tit->retbanco)).and.;
           (!left(tit->retbanco,13)$cTipoRem)
 	   
-          GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
+          GRAVAAUX()   // pega o titulo e cadastra no auxiliar para mostragem
 	  
         ENDIF
         TIT->(DBSKIP())
@@ -256,7 +256,7 @@ elseif cCodMov $ "02"  // pedido de baixa
           (tit->tipodoc $ "DP,DC") .and.(!empty(tit->retbanco)).and.;
           (!left(tit->retbanco,13)$cTipoRem)
 	   
-          GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
+          GRAVAAUX()   // pega o titulo e cadastra no auxiliar para mostragem
 	  
         ENDIF
         TIT->(DBSKIP())
@@ -274,7 +274,7 @@ else  // outros
       (! "Entr Rejeit" $ tit->retbanco) .and.;
       (!empty(tit->retbanco))
 	   
-      GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
+      GRAVAAUX()   // pega o titulo e cadastra no auxiliar para mostragem
 	  
     ENDIF
     TIT->(DBSKIP())
@@ -315,7 +315,7 @@ DECLARE cab[14],cam[14],mas[14]
 
 cab[1] := "M"
 cab[2] := "Retorno do banco"
-cab[3] := "Data;Emiss„o"
+cab[3] := "Data;Emissao"
 cab[4] := "Data;Vencto."
 cab[5] := "Gerados (O-Opcoes)"
 cab[6] := "St"
@@ -325,8 +325,8 @@ cab[9] := "Data;Baixa"
 cab[10] := "Vendedor"
 cab[11] := "Cliente"
 cab[12]:= "Valor"
-cab[13]:= "N§ Bloq no Bco"
-cab[14]:= "N§ Ped"
+cab[13]:= "No Bloq no Bco"
+cab[14]:= "No Ped"
 cam[1] := "AUX->MARCA"
 cam[2] := "AUX->RETBANCO"
 cam[3] := "AUX->DTEMISS"
@@ -379,7 +379,7 @@ IF modo = 1 .OR. modo = 2   ;   TONE(700,1)  ;   ENDIF
 *  KEYBOARD CHR(2)            // seta ctrl ->
 //
 IF CHR(LASTKEY()) $ "Dd"    // Desmarcar Todos
-  IF CONFIRMA("Confirma Desmarca‡„o de Todos (S/N) ?"," ")
+  IF CONFIRMA("Confirma Desmarcacao de Todos (S/N) ?"," ")
     TONE(900,1)
     @ 22,02 CLEAR TO 22,74
     CENTRA("Desmarcando todos os titulos. [Aguarde]")
@@ -411,7 +411,7 @@ IF CHR(LASTKEY()) $ "Dd"    // Desmarcar Todos
   KEYBOARD CHR(26)
 //
 ELSEIF CHR(LASTKEY()) $ "Tt"    // Marcar Todos
-  IF CONFIRMA("Confirma Marca‡„o de Todos (S/N) ?"," ")
+  IF CONFIRMA("Confirma Marcacao de Todos (S/N) ?"," ")
     TONE(900,1)
     @ 22,02 CLEAR TO 22,74
     CENTRA("Marcando todos os titulos. [Aguarde]")
@@ -462,7 +462,7 @@ ELSEIF CHR(LASTKEY()) $ "Mm"    // Marcar/Descmarca
   ENDIF
   //
   TONE(900,1)
-  KEYBOARD CHR(24)           // Pr¢ximo Item
+  KEYBOARD CHR(24)           // Proximo Item
   RETURN(2)
 ELSEIF chr(LASTKEY()) $ "pP"
    telaaux := SAVESCREEN(16,00,23,79)
@@ -492,7 +492,7 @@ ELSEIF LASTKEY() == -2       // F3 GERAR ARQUIVO
   COUNT TO nMARCAs FOR !empty(AUX->marca)
   AUX->( DBGOTOP() )
   IF nMARCAs < 1
-    MENSAGEM("N„o h  titulos selecionados"+enter,,.T.)
+    MENSAGEM("Nao ha titulos selecionados"+enter,,.T.)
     KEYBOARD CHR(26)
     AUX->( DBGOTOp() )
     CENTRA("[T]-Mar_Todos [D]-Des_Todos [M]-Marca/Desm [F3]-Gerar [O]-Opcoes [P]-Pesq.")
@@ -544,7 +544,7 @@ astru := { ;
 DBCREATE("ARQ_REM.DBF",astru)
 USE ARQ_REM.DBF ALIAS ARQ NEW
 
-// este for abaixo ‚ devido existir 2 convenios, ou seja, dois nosso numero.
+// este for abaixo e devido existir 2 convenios, ou seja, dois nosso numero.
 // entao deve ser enviado dois arquivos separados...
 for xx := 1 to 1
 
@@ -791,7 +791,7 @@ WHILE AUX->( !EOF() )
 	// permite desconto no primeiro dia util
     mdat := tit->dtvencant
     WHILE .T.
-      IF DOW(mdat) == 7        // SÁBADO
+      IF DOW(mdat) == 7        // SABADO
         mdat += 2
 		LOOP
       ELSEIF DOW(mdat) == 1    // DOMINGO
@@ -868,7 +868,7 @@ WHILE AUX->( !EOF() )
              "0000000000"+;
              SPACE(1)
   elseif cBanco1 = "341"
-  cNossoN := alltrim(TIT->NOSSONUM)+digito("8322"+"11901"+"109"+subst(TIT->NOSSONUM,4,8))  // cria um dígito verificador usando o modulo 10.
+  cNossoN := alltrim(TIT->NOSSONUM)+digito("8322"+"11901"+"109"+subst(TIT->NOSSONUM,4,8))  // cria um digito verificador usando o modulo 10.
 
 mregrem := cBanco1+;   					// 1-3
              "0001"+;					// 4-7
@@ -1136,15 +1136,16 @@ IF LASTREC() > 4
 
   SELE ARQ
   GO TOP
+  cNomeArq := if(cBanco1 == "422", "REMSAFRA", "REMESSA")   // nome do arquivo conforme o banco escolhido
   cExt := cBanco1
   while .t.
-    if ! file("BB\REMESSA.&cExt.")
-      // COPY TO BB\REMESSA.&cExt. SDF
+    if ! file("BB\&cNomeArq..&cExt.")
+      // COPY TO BB\<cNomeArq>.&cExt. SDF
 	  copy to bb\remessa.txt sdf
       
 	  tira26()   // tira o caracter do fim do arquivo
   
-      RENAME bb\remess2.txt TO BB\REMESSA.&cExt.
+      RENAME bb\remess2.txt TO BB\&cNomeArq..&cExt.
 	  erase bb\remessa.txt
       exit
     endif
@@ -1159,7 +1160,7 @@ go top
 next
 
 TONE(1000,5) ; TONE(2000,5) ; TONE(3000,5)
-MENSAGEM("Arquivo (REMESSA."+cExt+") Gerado com sucesso."+enter,,.F.)
+MENSAGEM("Arquivo ("+cNomeArq+"."+cExt+") Gerado com sucesso."+enter,,.F.)
 CENTRA("[T]-Mar_Todos [D]-Des_Todos [M]-Marca/Desm [F3]-Gerar [O]-Opcoes [P]-Pesq.")
 
 IF SELECT("ARQ") # 0
@@ -1287,7 +1288,7 @@ FUNCTION CONFIRMA(mtexto,mresp1)
  SETCURSOR(cursorant); SetColor(lcCor)
 RETURN(IIF(mresp2 = "S",.T.,.F.))
 
-FUNCTION GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
+FUNCTION GRAVAAUX()   // pega o titulo e cadastra no auxiliar para mostragem
 *******************
 AUX->(DBAPPEND())
 AUX->MARCA     := TIT->MARCA
@@ -1374,7 +1375,7 @@ fclose(arq_txt)
 *ferase("arquivo.tmp")
 
 //Utilizeu um BUFFER de 30.000 bytes,
-//mas se for necessário pode diminuir este tamanho para a metade.
+//mas se for necessario pode diminuir este tamanho para a metade.
 return(.t.)
 
 function trocacarac(texto)

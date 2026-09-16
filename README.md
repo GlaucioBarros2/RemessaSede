@@ -57,20 +57,38 @@ programa, em `#define`, caso seja necessário ajustá-los).
 
 Programa em CA-Clipper/xHarbour (`src/REMESSA.PRG`) que monta e exibe os
 títulos a enviar (entrada, baixa, protesto, etc.) e gera o arquivo de
-remessa CNAB240 (`REMESSA.<código do banco>`) a partir das tabelas
-`SACADTIT`/`SACADCLI`/`SACADSET`/`SACADEMP`.
+remessa CNAB240 a partir das tabelas
+`SACADTIT`/`SACADCLI`/`SACADSET`/`SACADEMP`. O nome do arquivo gerado
+depende do banco escolhido: `REMESSA.<código do banco>` para Itaú e BB
+(ex.: `REMESSA.341`, `REMESSA.001`), e **`REMSAFRA.<código do banco>`**
+para o Safra (ex.: `REMSAFRA.422`), para ficar visualmente claro de
+qual banco é o arquivo mesmo sem abrir o conteúdo.
 
 ## Bancos suportados
 
-- **341 — Banco Itaú SA**
-- **001 — Banco do Brasil**
-- **422 — Banco Safra SA** *(adicionado seguindo o mesmo padrão dos
-  bancos acima)*
+Menu de seleção (`opcaoB`), nesta ordem:
 
-A escolha do banco é feita no menu inicial (`opcaoB`), que define
-`cBanco1` (código do banco) e `cBanco2` (nome do banco), usados em
+1. **341 — Banco Itaú SA**
+2. **422 — Banco Safra SA** *(adicionado seguindo o mesmo padrão dos
+  bancos acima)*
+3. **001 — Banco do Brasil**
+
+A escolha do banco define `cBanco1` (código do banco), `cBanco2` (nome
+do banco) e `cNomeArq` (nome-base do arquivo gerado), usados em
 seguida para selecionar o layout correto de cada registro (header de
 arquivo, header de lote, segmentos P/Q, trailers).
+
+## Sem acentuação no código-fonte
+
+O programa não usa mais nenhum caractere acentuado (á, é, ã, ç, etc.)
+em suas mensagens de tela nem em comentários — foram substituídos
+pelo equivalente sem acento (ex.: "Emissão" → "Emissao"). Isso evita
+problemas de exibição na tela do MS-DOS quando o arquivo é editado em
+ferramentas que usam páginas de código diferentes da usada originalmente.
+Os caracteres de desenho de caixa/moldura (`DISPBOX()`, `DBEDIT()`,
+`F_BOX()`) continuam usando os bytes da página de código OEM/DOS
+original — esses **não** são caracteres acentuados, são símbolos de
+desenho (linhas/cantos de caixa) que não têm equivalente sem acento.
 
 ## Sobre o suporte ao Banco Safra
 
