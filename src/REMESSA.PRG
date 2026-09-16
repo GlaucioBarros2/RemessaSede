@@ -1382,39 +1382,40 @@ function trocacarac(texto)
 
  // Remove acentuacao (o Safra, como a maioria dos bancos, exige texto
  // sem acentos nos campos do CNAB240) - usa CHR(n) com os codigos da
- // pagina de codigo OEM/DOS (CP850, padrao em sistemas Clipper no
- // Brasil) em vez de gravar o caracter acentuado direto no fonte, pra
- // nao depender de qual code page este arquivo .PRG e' editado/salvo.
- texto := STRTRAN(texto,CHR(160),"A")  // a com agudo
- texto := STRTRAN(texto,CHR(181),"A")  // A com agudo
- texto := STRTRAN(texto,CHR(131),"A")  // a com circunflexo
- texto := STRTRAN(texto,CHR(182),"A")  // A com circunflexo
- texto := STRTRAN(texto,CHR(198),"A")  // a com til
- texto := STRTRAN(texto,CHR(199),"A")  // A com til
- texto := STRTRAN(texto,CHR(133),"A")  // a com crase
- texto := STRTRAN(texto,CHR(183),"A")  // A com crase
- texto := STRTRAN(texto,CHR(130),"E")  // e com agudo
- texto := STRTRAN(texto,CHR(144),"E")  // E com agudo
- texto := STRTRAN(texto,CHR(136),"E")  // e com circunflexo
- texto := STRTRAN(texto,CHR(210),"E")  // E com circunflexo
- texto := STRTRAN(texto,CHR(161),"I")  // i com agudo
- texto := STRTRAN(texto,CHR(214),"I")  // I com agudo
- texto := STRTRAN(texto,CHR(140),"I")  // i com circunflexo
- texto := STRTRAN(texto,CHR(215),"I")  // I com circunflexo
- texto := STRTRAN(texto,CHR(162),"O")  // o com agudo
- texto := STRTRAN(texto,CHR(224),"O")  // O com agudo
- texto := STRTRAN(texto,CHR(147),"O")  // o com circunflexo
- texto := STRTRAN(texto,CHR(226),"O")  // O com circunflexo
- texto := STRTRAN(texto,CHR(228),"O")  // o com til
- texto := STRTRAN(texto,CHR(229),"O")  // O com til
- texto := STRTRAN(texto,CHR(163),"U")  // u com agudo
- texto := STRTRAN(texto,CHR(233),"U")  // U com agudo
- texto := STRTRAN(texto,CHR(150),"U")  // u com circunflexo
- texto := STRTRAN(texto,CHR(234),"U")  // U com circunflexo
- texto := STRTRAN(texto,CHR(129),"U")  // u com trema
- texto := STRTRAN(texto,CHR(154),"U")  // U com trema
- texto := STRTRAN(texto,CHR(135),"C")  // c cedilha
- texto := STRTRAN(texto,CHR(128),"C")  // C cedilha
+ // pagina de codigo Latin-1/Windows-1252 (confirmado no cadastro real:
+ // o campo Bairro "Cruz de Reboucas" grava o "c cedilha" nesta pagina)
+ // em vez de gravar o caracter acentuado direto no fonte, pra nao
+ // depender de qual code page este arquivo .PRG e' editado/salvo.
+ texto := STRTRAN(texto,CHR(225),"A")  // a com agudo
+ texto := STRTRAN(texto,CHR(193),"A")  // A com agudo
+ texto := STRTRAN(texto,CHR(226),"A")  // a com circunflexo
+ texto := STRTRAN(texto,CHR(194),"A")  // A com circunflexo
+ texto := STRTRAN(texto,CHR(227),"A")  // a com til
+ texto := STRTRAN(texto,CHR(195),"A")  // A com til
+ texto := STRTRAN(texto,CHR(224),"A")  // a com crase
+ texto := STRTRAN(texto,CHR(192),"A")  // A com crase
+ texto := STRTRAN(texto,CHR(233),"E")  // e com agudo
+ texto := STRTRAN(texto,CHR(201),"E")  // E com agudo
+ texto := STRTRAN(texto,CHR(234),"E")  // e com circunflexo
+ texto := STRTRAN(texto,CHR(202),"E")  // E com circunflexo
+ texto := STRTRAN(texto,CHR(237),"I")  // i com agudo
+ texto := STRTRAN(texto,CHR(205),"I")  // I com agudo
+ texto := STRTRAN(texto,CHR(238),"I")  // i com circunflexo
+ texto := STRTRAN(texto,CHR(206),"I")  // I com circunflexo
+ texto := STRTRAN(texto,CHR(243),"O")  // o com agudo
+ texto := STRTRAN(texto,CHR(211),"O")  // O com agudo
+ texto := STRTRAN(texto,CHR(244),"O")  // o com circunflexo
+ texto := STRTRAN(texto,CHR(212),"O")  // O com circunflexo
+ texto := STRTRAN(texto,CHR(245),"O")  // o com til
+ texto := STRTRAN(texto,CHR(213),"O")  // O com til
+ texto := STRTRAN(texto,CHR(250),"U")  // u com agudo
+ texto := STRTRAN(texto,CHR(218),"U")  // U com agudo
+ texto := STRTRAN(texto,CHR(251),"U")  // u com circunflexo
+ texto := STRTRAN(texto,CHR(219),"U")  // U com circunflexo
+ texto := STRTRAN(texto,CHR(252),"U")  // u com trema
+ texto := STRTRAN(texto,CHR(220),"U")  // U com trema
+ texto := STRTRAN(texto,CHR(231),"C")  // c cedilha
+ texto := STRTRAN(texto,CHR(199),"C")  // C cedilha
 
  WHILE "/" $ texto 
    posic := AT("/",texto)
