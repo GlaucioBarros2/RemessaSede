@@ -650,8 +650,7 @@ else  // SAFRA (422) - layout conforme manual "Cobranca Safra - Layout Padrao
              SUBST(DTOS(ddataatu),1,4)+;
              "000000"+;                         // 152-157 Hora de geracao - manual pede "000000"
              "000001"+;                         // 158-163 Numero sequencial do arquivo
-             "084"+;                            // 164-166 TODO SAFRA: versao do layout - opcoes
-                                                 // validas 084/087/103, confirmar com o banco
+             "084"+;                            // 164-166 TODO SAFRA: versao (084/087/103), confirmar com o banco
              "00000"+;                          // 167-171 Densidade de gravacao (opcional)
              SPACE(20)+;                        // 172-191 Uso reservado do banco
              SPACE(20)+;                        // 192-211 Uso reservado da empresa
