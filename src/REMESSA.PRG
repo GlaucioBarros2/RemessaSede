@@ -163,7 +163,7 @@ if cCodMov $ "01"  // Entrada de Titulos
        (cli->remess $ "S ") .and. (tit->tipodoc$"DP,DC,OR") .and. (TIT->CODPOR = cBanco1) .and.;
        (("Entr Rejeit"$tit->retbanco) .or. empty(tit->retbanco))
 	   
-      GRAVAAUX()   // pega o tï¿½tulo e cadastra no auxiliar para mostragem
+      GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
 	  
     ENDIF
     TIT->(DBSKIP())
@@ -190,7 +190,7 @@ elseif cCodMov $ "09"  // protestar
       (tit->tipodoc$"DP,DC,OR") .and.;
       (left(tit->retbanco,13) $ cTipoRem)
 	   
-      GRAVAAUX()   // pega o tï¿½tulo e cadastra no auxiliar para mostragem
+      GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
 	  
     ENDIF
     TIT->(DBSKIP())
@@ -209,7 +209,7 @@ elseif cCodMov $ "02"  // pedido de baixa
         (tit->tipodoc$"DP,DC,OR") .and.(!empty(tit->retbanco)).and.;
                                     (!left(tit->retbanco,13)$cTipoRem)
 	   
-        GRAVAAUX()   // pega o tï¿½tulo e cadastra no auxiliar para mostragem
+        GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
 	  
       ENDIF
       TIT->(DBSKIP())
@@ -224,7 +224,7 @@ elseif cCodMov $ "02"  // pedido de baixa
           (tit->tipodoc$"DP,DC,OR") .and.(!empty(tit->retbanco)).and.;
           (!left(tit->retbanco,13)$cTipoRem)
 	   
-          GRAVAAUX()   // pega o tï¿½tulo e cadastra no auxiliar para mostragem
+          GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
 	  
         ENDIF
         TIT->(DBSKIP())
@@ -239,7 +239,7 @@ elseif cCodMov $ "02"  // pedido de baixa
           (tit->tipodoc$"DP,DC,OR") .and.(!empty(tit->retbanco)).and.;
           (!left(tit->retbanco,13)$cTipoRem)
 	   
-          GRAVAAUX()   // pega o tï¿½tulo e cadastra no auxiliar para mostragem
+          GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
 	  
         ENDIF
         TIT->(DBSKIP())
@@ -256,7 +256,7 @@ elseif cCodMov $ "02"  // pedido de baixa
           (tit->tipodoc $ "DP,DC") .and.(!empty(tit->retbanco)).and.;
           (!left(tit->retbanco,13)$cTipoRem)
 	   
-          GRAVAAUX()   // pega o tï¿½tulo e cadastra no auxiliar para mostragem
+          GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
 	  
         ENDIF
         TIT->(DBSKIP())
@@ -274,7 +274,7 @@ else  // outros
       (! "Entr Rejeit" $ tit->retbanco) .and.;
       (!empty(tit->retbanco))
 	   
-      GRAVAAUX()   // pega o tï¿½tulo e cadastra no auxiliar para mostragem
+      GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
 	  
     ENDIF
     TIT->(DBSKIP())
@@ -315,7 +315,7 @@ DECLARE cab[14],cam[14],mas[14]
 
 cab[1] := "M"
 cab[2] := "Retorno do banco"
-cab[3] := "Data;Emissï¿½o"
+cab[3] := "Data;Emiss„o"
 cab[4] := "Data;Vencto."
 cab[5] := "Gerados (O-Opcoes)"
 cab[6] := "St"
@@ -325,8 +325,8 @@ cab[9] := "Data;Baixa"
 cab[10] := "Vendedor"
 cab[11] := "Cliente"
 cab[12]:= "Valor"
-cab[13]:= "Nï¿½ Bloq no Bco"
-cab[14]:= "Nï¿½ Ped"
+cab[13]:= "N§ Bloq no Bco"
+cab[14]:= "N§ Ped"
 cam[1] := "AUX->MARCA"
 cam[2] := "AUX->RETBANCO"
 cam[3] := "AUX->DTEMISS"
@@ -348,7 +348,7 @@ mas[12]:= "@E 999,999.99"
 cNumMov := space(8)
 //
 TONE(900,1)  ;  TONE(900,1)
-SCROLL(03,00,21,79,0) ; DISPBOX(03,00,21,79,"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")
+SCROLL(03,00,21,79,0) ; DISPBOX(03,00,21,79,"ÜÄÜÞßÄßÝ")
 CENTRA("[T]-Mar_Todos [D]-Des_Todos [M]-Marca/Desm [F3]-Gerar [O]-Opcoes [P]-Pesq.")
 //
 CLI->( DBSETORDER(1) )
@@ -356,7 +356,7 @@ CLI->( DBSETORDER(1) )
 SELECT AUX
 GO TOP
 //
-DBEDIT(04,01,19,78,cam,"DBCONFCLI",mas,cab,"ï¿½ï¿½","ï¿½","ï¿½ï¿½")
+DBEDIT(04,01,19,78,cam,"DBCONFCLI",mas,cab,"ÂÄ","³","ÏÍ")
 //
 SET FILTER TO
 SET RELATION TO
@@ -379,7 +379,7 @@ IF modo = 1 .OR. modo = 2   ;   TONE(700,1)  ;   ENDIF
 *  KEYBOARD CHR(2)            // seta ctrl ->
 //
 IF CHR(LASTKEY()) $ "Dd"    // Desmarcar Todos
-  IF CONFIRMA("Confirma Desmarcaï¿½ï¿½o de Todos (S/N) ?"," ")
+  IF CONFIRMA("Confirma Desmarca‡„o de Todos (S/N) ?"," ")
     TONE(900,1)
     @ 22,02 CLEAR TO 22,74
     CENTRA("Desmarcando todos os titulos. [Aguarde]")
@@ -411,7 +411,7 @@ IF CHR(LASTKEY()) $ "Dd"    // Desmarcar Todos
   KEYBOARD CHR(26)
 //
 ELSEIF CHR(LASTKEY()) $ "Tt"    // Marcar Todos
-  IF CONFIRMA("Confirma Marcaï¿½ï¿½o de Todos (S/N) ?"," ")
+  IF CONFIRMA("Confirma Marca‡„o de Todos (S/N) ?"," ")
     TONE(900,1)
     @ 22,02 CLEAR TO 22,74
     CENTRA("Marcando todos os titulos. [Aguarde]")
@@ -462,7 +462,7 @@ ELSEIF CHR(LASTKEY()) $ "Mm"    // Marcar/Descmarca
   ENDIF
   //
   TONE(900,1)
-  KEYBOARD CHR(24)           // Prï¿½ximo Item
+  KEYBOARD CHR(24)           // Pr¢ximo Item
   RETURN(2)
 ELSEIF chr(LASTKEY()) $ "pP"
    telaaux := SAVESCREEN(16,00,23,79)
@@ -492,7 +492,7 @@ ELSEIF LASTKEY() == -2       // F3 GERAR ARQUIVO
   COUNT TO nMARCAs FOR !empty(AUX->marca)
   AUX->( DBGOTOP() )
   IF nMARCAs < 1
-    MENSAGEM("Nï¿½o hï¿½ titulos selecionados"+enter,,.T.)
+    MENSAGEM("N„o h  titulos selecionados"+enter,,.T.)
     KEYBOARD CHR(26)
     AUX->( DBGOTOp() )
     CENTRA("[T]-Mar_Todos [D]-Des_Todos [M]-Marca/Desm [F3]-Gerar [O]-Opcoes [P]-Pesq.")
@@ -544,7 +544,7 @@ astru := { ;
 DBCREATE("ARQ_REM.DBF",astru)
 USE ARQ_REM.DBF ALIAS ARQ NEW
 
-// este for abaixo ï¿½ devido existir 2 convenios, ou seja, dois nosso numero.
+// este for abaixo ‚ devido existir 2 convenios, ou seja, dois nosso numero.
 // entao deve ser enviado dois arquivos separados...
 for xx := 1 to 1
 
@@ -791,7 +791,7 @@ WHILE AUX->( !EOF() )
 	// permite desconto no primeiro dia util
     mdat := tit->dtvencant
     WHILE .T.
-      IF DOW(mdat) == 7        // Sï¿½BADO
+      IF DOW(mdat) == 7        // SÁBADO
         mdat += 2
 		LOOP
       ELSEIF DOW(mdat) == 1    // DOMINGO
@@ -868,7 +868,7 @@ WHILE AUX->( !EOF() )
              "0000000000"+;
              SPACE(1)
   elseif cBanco1 = "341"
-  cNossoN := alltrim(TIT->NOSSONUM)+digito("8322"+"11901"+"109"+subst(TIT->NOSSONUM,4,8))  // cria um dï¿½gito verificador usando o modulo 10.
+  cNossoN := alltrim(TIT->NOSSONUM)+digito("8322"+"11901"+"109"+subst(TIT->NOSSONUM,4,8))  // cria um dígito verificador usando o modulo 10.
 
 mregrem := cBanco1+;   					// 1-3
              "0001"+;					// 4-7
@@ -1250,8 +1250,8 @@ SetColor("W+/W+") ; @ lin1,col1 to lin2,col2
 SetColor("N+/W+")
 @ lin2,col1+1 to lin2,col2
 @ lin1,col2   to lin2,col2
-@ lin1,col2 Say "ï¿½"
-@ lin2,col2 Say "ï¿½"
+@ lin1,col2 Say "¿"
+@ lin2,col2 Say "Ù"
 SetColor( Cor )
 Return(.T.)
 *
@@ -1287,7 +1287,7 @@ FUNCTION CONFIRMA(mtexto,mresp1)
  SETCURSOR(cursorant); SetColor(lcCor)
 RETURN(IIF(mresp2 = "S",.T.,.F.))
 
-FUNCTION GRAVAAUX()   // pega o tï¿½tulo e cadastra no auxiliar para mostragem
+FUNCTION GRAVAAUX()   // pega o título e cadastra no auxiliar para mostragem
 *******************
 AUX->(DBAPPEND())
 AUX->MARCA     := TIT->MARCA
@@ -1374,11 +1374,47 @@ fclose(arq_txt)
 *ferase("arquivo.tmp")
 
 //Utilizeu um BUFFER de 30.000 bytes,
-//mas se for necessï¿½rio pode diminuir este tamanho para a metade.
+//mas se for necessário pode diminuir este tamanho para a metade.
 return(.t.)
 
 function trocacarac(texto)
 ********************
+
+ // Remove acentuacao (o Safra, como a maioria dos bancos, exige texto
+ // sem acentos nos campos do CNAB240) - usa CHR(n) com os codigos da
+ // pagina de codigo OEM/DOS (CP850, padrao em sistemas Clipper no
+ // Brasil) em vez de gravar o caracter acentuado direto no fonte, pra
+ // nao depender de qual code page este arquivo .PRG e' editado/salvo.
+ texto := STRTRAN(texto,CHR(160),"A")  // a com agudo
+ texto := STRTRAN(texto,CHR(181),"A")  // A com agudo
+ texto := STRTRAN(texto,CHR(131),"A")  // a com circunflexo
+ texto := STRTRAN(texto,CHR(182),"A")  // A com circunflexo
+ texto := STRTRAN(texto,CHR(198),"A")  // a com til
+ texto := STRTRAN(texto,CHR(199),"A")  // A com til
+ texto := STRTRAN(texto,CHR(133),"A")  // a com crase
+ texto := STRTRAN(texto,CHR(183),"A")  // A com crase
+ texto := STRTRAN(texto,CHR(130),"E")  // e com agudo
+ texto := STRTRAN(texto,CHR(144),"E")  // E com agudo
+ texto := STRTRAN(texto,CHR(136),"E")  // e com circunflexo
+ texto := STRTRAN(texto,CHR(210),"E")  // E com circunflexo
+ texto := STRTRAN(texto,CHR(161),"I")  // i com agudo
+ texto := STRTRAN(texto,CHR(214),"I")  // I com agudo
+ texto := STRTRAN(texto,CHR(140),"I")  // i com circunflexo
+ texto := STRTRAN(texto,CHR(215),"I")  // I com circunflexo
+ texto := STRTRAN(texto,CHR(162),"O")  // o com agudo
+ texto := STRTRAN(texto,CHR(224),"O")  // O com agudo
+ texto := STRTRAN(texto,CHR(147),"O")  // o com circunflexo
+ texto := STRTRAN(texto,CHR(226),"O")  // O com circunflexo
+ texto := STRTRAN(texto,CHR(228),"O")  // o com til
+ texto := STRTRAN(texto,CHR(229),"O")  // O com til
+ texto := STRTRAN(texto,CHR(163),"U")  // u com agudo
+ texto := STRTRAN(texto,CHR(233),"U")  // U com agudo
+ texto := STRTRAN(texto,CHR(150),"U")  // u com circunflexo
+ texto := STRTRAN(texto,CHR(234),"U")  // U com circunflexo
+ texto := STRTRAN(texto,CHR(129),"U")  // u com trema
+ texto := STRTRAN(texto,CHR(154),"U")  // U com trema
+ texto := STRTRAN(texto,CHR(135),"C")  // c cedilha
+ texto := STRTRAN(texto,CHR(128),"C")  // C cedilha
 
  WHILE "/" $ texto 
    posic := AT("/",texto)
