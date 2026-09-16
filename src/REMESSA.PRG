@@ -560,13 +560,12 @@ elseif cBanco1 == "341"
   cAgen := "08322 "
   cCont := "000000011901 "
 else
-  // TODO SAFRA: preencher com os dados reais da conta de cobranca Safra
-  // (agencia, conta corrente e respectivo digito verificador) antes de
-  // usar em producao. Larguras conforme manual "Cobranca Safra - Layout
-  // Padrao Safra CNAB 240": agencia 5 digitos, conta 12 digitos, DV 1 digito.
-  cAgenSaf   := "00000"          // agencia (5 digitos)
-  cContSaf   := "000000000000"   // conta corrente (12 digitos)
-  cContDVSaf := "0"              // digito verificador da conta corrente
+  // Dados reais do convenio Safra (agencia 0144, conta 00587488-9).
+  // Larguras conforme manual "Cobranca Safra - Layout Padrao Safra CNAB
+  // 240": agencia 5 digitos, conta 12 digitos, DV 1 digito.
+  cAgenSaf   := "00144"          // agencia (5 digitos)
+  cContSaf   := "000000587488"   // conta corrente (12 digitos)
+  cContDVSaf := "9"              // digito verificador da conta corrente
 endif
 
 // header de arquivo - registro 0

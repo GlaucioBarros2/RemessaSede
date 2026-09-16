@@ -64,8 +64,11 @@ uses UnitDM, DB;
 // Safra (F+agencia+conta+nosso numero+F) e as duas nao sao equivalentes.
 //
 // TODO SAFRA - pendente antes de usar em producao:
-//   1) cAgSafra / cContaSafra abaixo sao PLACEHOLDERS - substituir pelos
-//      dados reais da agencia/conta do convenio Safra.
+//   1) cAgSafra (0144) / cContaSafra+cContaDVSafra (00587488-9) ja tem os
+//      dados reais do convenio Safra. Falta confirmar se o campo livre do
+//      codigo de barras (10 digitos) espera so a conta (zero-padded, como
+//      esta hoje) ou a conta+DV concatenados - ver comentario ao lado de
+//      cContaSafra abaixo.
 //   2) Os digitos "de uso livre" nas posicoes 20 e 44 do codigo de barras
 //      (cFLivreSafra1/cFLivreSafra2) nao sao documentados no manual -
 //      usando "0" como valor neutro ate confirmar com a mesa de implantacao
@@ -84,8 +87,11 @@ uses UnitDM, DB;
 //      C:\ na maquina onde este programa roda, igual ja e' feito hoje
 //      com 'boleto 2v BB.bmp' e 'boleto 2v ITAU.bmp'.
 const
-  cAgSafra      = '0000';        // TODO SAFRA: agencia real (4 digitos)
-  cContaSafra   = '0000000000';  // TODO SAFRA: conta corrente real (10 digitos)
+  cAgSafra      = '0144';        // agencia real
+  cContaSafra   = '0000587488';  // conta corrente real (10 digitos, sem DV - TODO confirmar se
+                                  // o campo livre do codigo de barras Safra espera o DV embutido
+                                  // aqui ou separado, como em cContaDVSafra abaixo)
+  cContaDVSafra = '9';           // digito verificador da conta corrente (00587488-9)
   cFLivreSafra1 = '0';           // TODO SAFRA: digito de uso livre (posicao 20 do cod. barras)
   cFLivreSafra2 = '0';           // TODO SAFRA: digito de uso livre (posicao 44 do cod. barras)
   cPrefixoNNSafra = '422';       // prefixo do nosso numero livre do Safra
@@ -201,7 +207,7 @@ begin
       if DM.ATCadTitCODPOR.AsString = '001' then
         PrintXY(16.6,Linha+0.75,'2811-8/ 114546-0')
       else if DM.ATCadTitCODPOR.AsString = '422' then
-        PrintXY(16.6,Linha+0.75,cAgSafra+'/'+cContaSafra+'-0')  // TODO SAFRA: ajustar formatacao/DV se necessario
+        PrintXY(16.6,Linha+0.75,cAgSafra+'/'+cContaSafra+'-'+cContaDVSafra)
       else
         PrintXY(16.6,Linha+0.75,'8322/11901-0');
 
@@ -370,7 +376,7 @@ begin
           if DM.ATCadTitCODPOR.AsString = '001' then
             PrintXY(16.6,Linha+0.75,'2811-8/ 114546-0')
           else if DM.ATCadTitCODPOR.AsString = '422' then
-            PrintXY(16.6,Linha+0.75,cAgSafra+'/'+cContaSafra+'-0')  // TODO SAFRA: ajustar formatacao/DV se necessario
+            PrintXY(16.6,Linha+0.75,cAgSafra+'/'+cContaSafra+'-'+cContaDVSafra)
           else
             PrintXY(16.6,Linha+0.75,'8322/11901-0');
 

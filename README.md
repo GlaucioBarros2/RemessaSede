@@ -108,11 +108,14 @@ segmento P; o segmento Q já era genérico e vale para os três bancos).
   que a contagem em 018-023 é **só** dos registros de detalhe (segmentos
   P/Q/R) — por isso o Safra tem sua própria fórmula sem o "+2".
 
-### Ainda como placeholder — TODO antes de produção
+### Já preenchido com dados reais
 
 - **Agência, conta corrente e dígito verificador da conta**
   (`cAgenSaf`, `cContSaf`, `cContDVSaf`, definidos em `GER_ARQUIVO()`) —
-  hoje zerados; preencher com os dados reais do convênio Safra.
+  agência `0144`, conta `00587488-9`.
+
+### Ainda como placeholder — TODO antes de produção
+
 - **Versão do layout do arquivo** (posições 164-166 do header de
   arquivo): o manual lista 3 opções válidas (`084`, `087` ou `103`) sem
   indicar qual usar — o código está com `"084"`, a confirmar com a Mesa
@@ -165,12 +168,17 @@ digitável (`LinhaDigitavel`), por ser puramente posicional (não depende
 do significado de cada sub-campo), foi reaproveitado exatamente igual ao
 do Itaú.
 
+**Já preenchido com dados reais**: `cAgSafra` (`'0144'`), `cContaSafra`
+(`'0000587488'`) e `cContaDVSafra` (`'9'`) — agência `0144`, conta
+`00587488-9`.
+
 **Pendências antes de usar em produção** (comentários `// TODO SAFRA` no
 código):
 
-- **`cAgSafra` / `cContaSafra`**: hoje são placeholders (`'0000'` /
-  `'0000000000'`) — substituir pelos dados reais da agência/conta do
-  convênio Safra.
+- Falta confirmar se o campo livre do código de barras (10 dígitos)
+  espera só a conta (zero-padded à esquerda, como está hoje) ou a
+  conta+DV concatenados — ver comentário ao lado de `cContaSafra` no
+  código.
 - **`cFLivreSafra1` / `cFLivreSafra2`**: os 2 dígitos de "uso livre" nas
   posições 20 e 44 do código de barras não são documentados no manual;
   estão fixos em `'0'` até confirmação com a mesa de implantação do
