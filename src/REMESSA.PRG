@@ -1167,7 +1167,7 @@ IF LASTREC() > 4
 
   SELE ARQ
   GO TOP
-  cNomeArq := if(cBanco1 == "422", "REMSAFRA", "REMESSA")   // nome do arquivo conforme o banco escolhido
+  cNomeArq := if(cBanco1=="341","REMITAU",if(cBanco1=="422","REMSAFRA","REMBB"))   // nome do arquivo conforme o banco escolhido (Itau/Safra/BB)
   cExt := cBanco1
   while .t.
     if ! file("BB\&cNomeArq..&cExt.")
