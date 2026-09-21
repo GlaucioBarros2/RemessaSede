@@ -64,37 +64,38 @@ uses UnitDM, DB;
 // Safra (F+agencia+conta+nosso numero+F) e as duas nao sao equivalentes.
 //
 // TODO SAFRA - pendente antes de usar em producao:
-//   1) cAgSafra (0144) / cContaSafra+cContaDVSafra (00587488-9) ja tem os
-//      dados reais do convenio Safra. Falta confirmar se o campo livre do
-//      codigo de barras (10 digitos) espera so a conta (zero-padded, como
-//      esta hoje) ou a conta+DV concatenados - ver comentario ao lado de
-//      cContaSafra abaixo.
-//   2) Os digitos "de uso livre" nas posicoes 20 e 44 do codigo de barras
-//      (cFLivreSafra1/cFLivreSafra2) nao sao documentados no manual -
-//      usando "0" como valor neutro ate confirmar com a mesa de implantacao
-//      do Safra.
-//   3) O campo DM.ATCadEm2NOSSONUM3 (contador sequencial do nosso numero
+//   1) Agencia/conta ja confirmadas pelo relatorio de validacao real da
+//      Safra (comparativo "Informado x Correto" do codigo de barras):
+//      Agencia = 1440 (o valor "0144" usado antes estava errado) e Conta =
+//      00587488-9. O campo "F" (uso livre) nas posicoes 20 e 44 do codigo
+//      de barras TAMBEM foi corrigido a partir desse relatorio: sao os
+//      digitos verificadores Modulo 10 da agencia e de
+//      (F20+agencia+conta+nosso numero) respectivamente - ver formula em
+//      GeraCodBarra2de5(). NAO sao mais "0" fixo.
+//   2) O campo DM.ATCadEm2NOSSONUM3 (contador sequencial do nosso numero
 //      Safra, mesmo papel de NOSSONUM/NOSSONUM2 para BB/Itau) precisa ser
 //      criado em UnitDM/tabela SACADEM2 - esta unit nao cria/edita o data
 //      module. Sem esse campo o projeto nao compila.
-//   4) O nosso numero do Safra e' LIVRE e tem exatamente 9 digitos no
+//   3) O nosso numero do Safra e' LIVRE e tem exatamente 9 digitos no
 //      arquivo de remessa (prefixo "422" + 6 digitos sequenciais, mesma
 //      convencao usada em REMESSA.PRG) - o boleto deve espelhar exatamente
 //      o que vai na remessa, por isso a largura aqui e' 6 (e nao 8 como
 //      no Itau).
-//   5) A imagem 'boleto 2v SAFRA.bmp' (mesmo layout do 'boleto 2v ITAU.bmp',
+//   4) A imagem 'boleto 2v SAFRA.bmp' (mesmo layout do 'boleto 2v ITAU.bmp',
 //      com logo/nome/codigo 422-7 do Safra) precisa ser copiada para
 //      C:\ na maquina onde este programa roda, igual ja e' feito hoje
 //      com 'boleto 2v BB.bmp' e 'boleto 2v ITAU.bmp'.
 const
-  cAgSafra      = '0144';        // agencia real
-  cContaSafra   = '0000587488';  // conta corrente real (10 digitos, sem DV - TODO confirmar se
-                                  // o campo livre do codigo de barras Safra espera o DV embutido
-                                  // aqui ou separado, como em cContaDVSafra abaixo)
-  cContaDVSafra = '9';           // digito verificador da conta corrente (00587488-9)
-  cFLivreSafra1 = '0';           // TODO SAFRA: digito de uso livre (posicao 20 do cod. barras)
-  cFLivreSafra2 = '0';           // TODO SAFRA: digito de uso livre (posicao 44 do cod. barras)
-  cPrefixoNNSafra = '422';       // prefixo do nosso numero livre do Safra
+  cAgSafra        = '1440';        // agencia real (4 digitos) - confirmada pelo
+                                    // relatorio de validacao da Safra
+  cContaSafra     = '00587488';    // conta corrente real (8 digitos, sem DV) -
+                                    // usada no rotulo impresso (agencia/conta)
+  cContaDVSafra   = '9';           // digito verificador da conta corrente (00587488-9)
+  cContaBarraSafra = '0005874889'; // conta+DV concatenados e zero-padded a 10 digitos
+                                    // ("0"+00587488+9) - usada so' na composicao do
+                                    // codigo de barras (campo CONTA de 10 digitos),
+                                    // confirmada pelo relatorio de validacao da Safra
+  cPrefixoNNSafra = '422';         // prefixo do nosso numero livre do Safra
 // ===========================================================================
 
 procedure TFormBoletoMes.BitBtn1Click(Sender: TObject);
@@ -221,7 +222,7 @@ begin
         if DM.ATCadTitCODPOR.AsString = '001' then
           PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
         else if DM.ATCadTitCODPOR.AsString = '422' then
-          PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaSafra+DM.ATCadTitNOSSONUM.AsString))
+          PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaBarraSafra+DM.ATCadTitNOSSONUM.AsString))
         else
           PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10('832211901'+DM.ATCadTitNOSSONUM.AsString))
       else
@@ -302,7 +303,7 @@ begin
           if DM.ATCadTitCODPOR.AsString = '001' then
             PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
           else if DM.ATCadTitCODPOR.AsString = '422' then
-            PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaSafra+DM.ATCadTitNOSSONUM.AsString))
+            PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaBarraSafra+DM.ATCadTitNOSSONUM.AsString))
           else
             PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10('832211901'+DM.ATCadTitNOSSONUM.AsString));
         end;
@@ -390,7 +391,7 @@ begin
             if DM.ATCadTitCODPOR.AsString = '001' then
               PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
             else if DM.ATCadTitCODPOR.AsString = '422' then
-              PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaSafra+DM.ATCadTitNOSSONUM.AsString))
+              PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaBarraSafra+DM.ATCadTitNOSSONUM.AsString))
             else
               PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10('832211901'+DM.ATCadTitNOSSONUM.AsString))
           else
@@ -472,7 +473,7 @@ begin
               if DM.ATCadTitCODPOR.AsString = '001' then
                 PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
               else if DM.ATCadTitCODPOR.AsString = '422' then
-                PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaSafra+DM.ATCadTitNOSSONUM.AsString))
+                PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaBarraSafra+DM.ATCadTitNOSSONUM.AsString))
               else
                 PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10('832211901'+DM.ATCadTitNOSSONUM.AsString))
             end;
@@ -697,10 +698,18 @@ begin
       // (Formatação do Código de Barras, pág. 22): F(1) + Agência(4) +
       // Conta(10) + Nosso Número(9) + F(1) = 25 dígitos. Diferente da
       // composição usada pelo Itaú (carteira+nosso número+DAC1+agência+
-      // conta+DAC2+"000"), por isso não reaproveita cCarteira/DAC1/DAC2.
+      // conta+DAC2+"000"). As duas posições "F" (uso livre) NÃO são livres
+      // na prática: comparando um "Informado x Correto" real devolvido pela
+      // Safra (relatório de validação), a posição 20 é o dígito verificador
+      // Módulo 10 da Agência sozinha, e a posição 44 é o dígito verificador
+      // Módulo 10 de (posição20 + Agência + Conta + Nosso Número). DAC1/DAC2
+      // são reaproveitados aqui só como nomes de variável, sem relação com
+      // o DAC1/DAC2 do Itaú logo abaixo.
       cNossoNumAux := DM.ATCadTitNOSSONUM.AsString;     // 9 dígitos livres (prefixo 422 + 6 sequenciais)
-      cDv     := CalcDigVerificador(cCodBanco+cMoeda+'0'+cFator+cValTit+cFLivreSafra1+cAgSafra+cContaSafra+cNossoNumAux+cFLivreSafra2);
-      cCodigo := cCodBanco+cMoeda+cDv+cFator+cValTit+cFLivreSafra1+cAgSafra+cContaSafra+cNossoNumAux+cFLivreSafra2;
+      DAC1    := Modulo10(cAgSafra);                                       // posição 20
+      DAC2    := Modulo10(DAC1+cAgSafra+cContaBarraSafra+cNossoNumAux);    // posição 44
+      cDv     := CalcDigVerificador(cCodBanco+cMoeda+'0'+cFator+cValTit+DAC1+cAgSafra+cContaBarraSafra+cNossoNumAux+DAC2);
+      cCodigo := cCodBanco+cMoeda+cDv+cFator+cValTit+DAC1+cAgSafra+cContaBarraSafra+cNossoNumAux+DAC2;
     end
   else
     begin

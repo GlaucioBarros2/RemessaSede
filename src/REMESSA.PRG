@@ -563,8 +563,12 @@ else
   // Dados reais do convenio Safra (agencia 0144, conta 00587488-9).
   // Larguras conforme manual "Cobranca Safra - Layout Padrao Safra CNAB
   // 240": agencia 5 digitos, conta 12 digitos, DV 1 digito.
-  cAgenSaf   := "00144"          // agencia (5 digitos)
-  cContSaf   := "000000587488"   // conta corrente (12 digitos)
+  cAgenSaf   := "14400"          // agencia (5 digitos) - confirmado pela Safra no
+                                  // relatorio de validacao (posicao 053-057/054-058/
+                                  // 018-022/101-105); o valor "00144" usado antes
+                                  // (baseado so no numero informado, 0144) estava errado
+  cContSaf   := "000000587488"   // conta corrente (12 digitos) - OK, nao foi apontado
+                                  // como erro no relatorio de validacao da Safra
   cContDVSaf := "9"              // digito verificador da conta corrente
 endif
 
@@ -956,7 +960,7 @@ mregrem := cBanco1+;   					// 001-003 Banco = 422
              STUFF(STRZERO(TIT->VALBRUTO,16,2),14,1,"")+;	// 086-100 Valor nominal do titulo
 			 cAgenSaf+;					// 101-105 Agencia encarregada da cobranca (mesma da 018-022)
              " "+;						// 106     DV agencia - em branco
-			 "99"+;						// 107-108 Especie do titulo = 99 (Outros)
+			 IF(tit->tipodoc=="DP","02",IF(tit->tipodoc=="DC","04","17"))+;  // 107-108 Especie (02=DM,04=DS,12=NP,16=NS,17=RC - "99" e' recusado; TODO SAFRA: confirmar codigo p/ tipodoc "OR")
 			 "N"+;						// 109     Titulo nao aceito
              SUBST(DTOC(TIT->DTEMISS),1,2)+;
              SUBST(DTOC(TIT->DTEMISS),4,2)+;
@@ -1013,7 +1017,7 @@ mregrem := cBanco1+;   					// 001-003 Banco = 422
 
 			 // "040868234000170"+;
              // "SEDE DAS MIUDEZAS ATACADO LTDA"+;
-  else  // ITAU (341) e SAFRA (422) - layout de segmento Q identico entre os dois
+  elseif cBanco1 = "341"  // ITAU
   mregrem := cBanco1+;
              "0001"+;
              "3"+;
@@ -1039,6 +1043,31 @@ mregrem := cBanco1+;   					// 001-003 Banco = 422
 
 			 // "040868234000170"+;
              // "SEDE DAS MIUDEZAS ATACADO LTDA"+;
+  else  // SAFRA (422) - o relatorio de validacao da Safra recusou os campos de
+        // sacador/avalista preenchidos com o CNPJ/nome da propria empresa (mesma
+        // convencao usada acima para BB/Itau). Para o Safra, sem sacador/avalista,
+        // exige tipo de inscricao "0" e os campos de numero/nome zerados/em branco.
+  mregrem := cBanco1+;
+             "0001"+;
+             "3"+;
+             strzero(++Csequenc,5)+;
+             "Q"+;
+             " "+;
+             cCodMov+;
+             IF(CLI->PESFISJUR=="F","1","2")+;
+             IF(CLI->PESFISJUR=="F","0000"+CLI->CPFCLI,"0"+CLI->CGCCLI)+;
+             left(trocacarac(CLI->RAZSOCCLI),30)+;
+			 SPACE(10)+;
+             trocacarac(CLI->ENDCLI)+SPACE(8)+;
+             trocacarac(CLI->BAIRCLI)+;
+             trocacarac(CLI->CEPCLI)+;
+			 LEFT(trocacarac(CLI->CIDCLI),15)+;
+			 CLI->ESTCLI+;
+             "0"+;                    // 154     Tipo de inscricao sacador/avalista = 0 (nao informado)
+             "000000000000000"+;      // 155-169 Numero de inscricao sacador/avalista = zeros
+             SPACE(40)+;               // 170-209 Nome do beneficiario final = em branco
+             "000"+;
+             SPACE(28)
   endif
   
   ARQ->( DBAPPEND() , arq->REGREMES := mregrem )
@@ -1079,15 +1108,18 @@ elseif cBanco1 = "341"
 	nTotCobSim += TIT->VALBRUTO
     nQtdCobSim++
 else  // SAFRA (422) - layout conforme manual "Cobranca Safra - Layout Padrao
-      // Safra CNAB 240" (Trailer de Lote, pag. 16-18). Diferente de BB/Itau,
-      // o campo 018-023 conta APENAS os registros de detalhe (P/Q/R), sem
-      // somar os registros de header/trailer de lote - por isso nao soma "+2"
-      // aqui.
+      // Safra CNAB 240" (Trailer de Lote, pag. 16-18), corrigido conforme o
+      // relatorio de validacao real da Safra: ao contrario do que o texto do
+      // manual sugeria, a posicao 018-023 SOMA "+2" (conta tambem os registros
+      // tipo 1 e 5 do lote, igual ao BB/Itau) - confirmado pois a Safra
+      // recusou "000006" e pediu "000008" (Csequenc=6 titulos + 2). A posicao
+      // 099-115 tambem deve vir com ZEROS, nao em branco (a Safra pediu
+      // "00000000000000000").
   mregrem := cBanco1+;                          // 001-003 Banco = 422
              "0001"+;                           // 004-007 Lote do servico
              "5"+;                              // 008     Tipo de registro = 5
              SPACE(9)+;                         // 009-017 Uso exclusivo - brancos
-             STRZERO(Csequenc,6)+;              // 018-023 Qtde de registros detalhe (P+Q) do lote
+             STRZERO(Csequenc+2,6)+;            // 018-023 Qtde de registros do lote (+2: header/trailer)
              STRZERO(nQtdCobSim,6)+;            // 024-029 Qtde de titulos em cobranca simples
              STUFF(STRZERO(nTotCobSim,18,2),16,1,"")+;	// 030-046 Valor total (simples)
              STRZERO(0,6)+;                     // 047-052 Qtde de titulos em cobranca vinculada
@@ -1095,7 +1127,7 @@ else  // SAFRA (422) - layout conforme manual "Cobranca Safra - Layout Padrao
              "000000"+;                         // 070-075 Qtde titulos caucionada - Safra nao trata
              STUFF(STRZERO(0.00,18,2),16,1,"")+;	// 076-092 Valor total (caucionada) - Safra nao trata
              "000000"+;                         // 093-098 Qtde titulos descontada - Safra nao trata
-             SPACE(17)+;                        // 099-115 Valor total titulos - deixar em branco
+             STRZERO(0,17)+;                    // 099-115 Valor total titulos - zeros (nao branco)
              SPACE(8)+;                         // 116-123 Numero de aviso do lancamento - em branco
              SPACE(117)                         // 124-240 Uso exclusivo - brancos
 	nTotCobSim += TIT->VALBRUTO

@@ -108,10 +108,11 @@ segmento P; o segmento Q já era genérico e vale para os três bancos).
   usam a hora real) e data do crédito fixa em `00000000`.
 - Segmento P: carteira `1` (Cobrança Simples), forma de cadastro `1`
   (Cobrança Registrada), tipo de documento `2` (Escritural), espécie do
-  título `99` (Outros — mesma convenção já usada no bloco do Itaú),
-  moeda `09` (Real), IOF e abatimento zerados (Safra não aceita
-  abatimento na entrada do título), código de juros/desconto conforme
-  haja ou não `cJurDia`/`cDesFin` calculados.
+  título mapeada a partir de `TIT->TIPODOC` (a Safra recusa `99`
+  "Outros", diferente do Itaú — ver seção de correções abaixo), moeda
+  `09` (Real), IOF e abatimento zerados (Safra não aceita abatimento na
+  entrada do título), código de juros/desconto conforme haja ou não
+  `cJurDia`/`cDesFin` calculados.
 - **Nosso Número**: o manual confirma que no Safra ele é **livre** — 9
   dígitos escolhidos pela empresa (posições 38 a 46 do segmento P), sem
   nenhum dígito verificador calculado pelo banco (isso só existe na
@@ -121,16 +122,58 @@ segmento P; o segmento Q já era genérico e vale para os três bancos).
   ser necessária). O programa usa como nosso número os 9 caracteres do
   campo `TIT->NOSSONUM`, na mesma convenção interna já usada para os
   outros bancos: prefixo `"422"` + 6 dígitos sequenciais.
-- Trailer de Lote (registro 5): ao contrário do bloco do Itaú/BB
-  (que soma "+2" ao total de registros do lote), o manual do Safra diz
-  que a contagem em 018-023 é **só** dos registros de detalhe (segmentos
-  P/Q/R) — por isso o Safra tem sua própria fórmula sem o "+2".
+- Trailer de Lote (registro 5): a contagem em 018-023 **soma "+2"** ao
+  total de registros de detalhe (contando também o header e o trailer
+  do lote), igual ao Itaú/BB — apesar do texto do manual sugerir que
+  seria só a contagem de detalhe, o relatório de validação real da
+  Safra confirmou que o "+2" é necessário (ver seção de correções
+  abaixo).
+
+### Corrigido a partir do relatório de validação real da Safra
+
+O primeiro arquivo de teste (`REMSAFRA.422`) gerado com os dados acima
+foi validado pela mesa de implantação do Safra e retornou 9 erros
+graves (categoria X, recusam o arquivo) e 2 informativos (categoria
+Y). Todos foram corrigidos:
+
+- **Agência** (posições 053-057 do header de arquivo, 054-058 do
+  header de lote, 018-022 e 101-105 do segmento P): o valor correto é
+  `14400`, não `00144` — o número de agência informado (`0144`) sozinho
+  não é o valor completo que a Safra espera nesse campo.
+- **Espécie do Título** (posição 107-108 do segmento P): a Safra
+  **recusa** `"99" (Outros)`, apesar do manual genérico listar essa
+  opção — exige um código específico (`02`=DM Duplicata Mercantil,
+  `04`=DS Duplicata de Serviço, `12`=NP, `16`=NS, `17`=RC). O código
+  agora mapeia `TIT->TIPODOC`: `"DP"→"02"`, `"DC"→"04"`, e usa `"17"`
+  como padrão para `"OR"` — **a confirmar** qual código a empresa
+  realmente usa para títulos com tipodoc `"OR"`.
+- **Segmento Q — Sacador/Avalista** (posições 154, 155-169, 170-209):
+  o bloco do Safra preenchia esses campos com o CNPJ/nome da própria
+  empresa (mesma convenção herdada do bloco do Itaú/BB) — a Safra
+  recusa isso. Como a empresa não opera com Factoring (sem
+  sacador/avalista), o Safra exige Tipo de Inscrição `"0"` (não
+  informado), Número de Inscrição zerado e Nome do Beneficiário Final
+  em branco. **Isso só foi corrigido para o Safra** — o bloco do Itaú
+  continua preenchendo esses campos com os dados da empresa, exatamente
+  como antes (o segmento Q deixou de ser compartilhado entre os dois
+  bancos).
+- **Trailer de Lote, Quantidade de Registros** (posição 018-023): a
+  Safra recusou `"000006"` e pediu `"000008"` — a fórmula mudou de
+  `Csequenc` para `Csequenc+2`, igual ao Itaú/BB (ver observação acima).
+- **Trailer de Lote, Valor Total dos Títulos em Carteiras** (posição
+  099-115): a Safra pediu zeros (`"00000000000000000"`), não espaços em
+  branco.
+
+Também identifiquei (mas **não** é um problema de código, é só um
+detalhe de uso): a Safra recusa título com vencimento anterior à data
+de validação/envio do arquivo — ao gerar uma remessa de teste, use
+datas de vencimento atuais ou futuras.
 
 ### Já preenchido com dados reais
 
 - **Agência, conta corrente e dígito verificador da conta**
   (`cAgenSaf`, `cContSaf`, `cContDVSaf`, definidos em `GER_ARQUIVO()`) —
-  agência `0144`, conta `00587488-9`.
+  agência `14400`, conta `00587488-9`.
 
 ### Ainda como placeholder — TODO antes de produção
 
@@ -186,21 +229,29 @@ digitável (`LinhaDigitavel`), por ser puramente posicional (não depende
 do significado de cada sub-campo), foi reaproveitado exatamente igual ao
 do Itaú.
 
-**Já preenchido com dados reais**: `cAgSafra` (`'0144'`), `cContaSafra`
-(`'0000587488'`) e `cContaDVSafra` (`'9'`) — agência `0144`, conta
-`00587488-9`.
+**Corrigido a partir do relatório de validação real da Safra** (o mesmo
+relatório usado para corrigir o `REMESSA.PRG` — ver seção
+correspondente acima — trazia uma comparação "Informado x Correto" do
+código de barras gerado por este arquivo):
+
+- **Agência**: `cAgSafra` era `'0144'`, correto é `'1440'`.
+- **Conta no código de barras**: `cContaSafra` (10 dígitos) era
+  `'0000587488'` (conta zero-padded, sem o DV) — o correto é conta+DV
+  concatenados: `'0005874889'` (renomeada para `cContaBarraSafra`,
+  usada só na montagem do código de barras). Para o rótulo impresso
+  (agência/conta legível), `cContaSafra` agora guarda só a conta pura
+  (`'00587488'`, 8 dígitos), e o DV continua em `cContaDVSafra` (`'9'`).
+- **Dígitos "F" (posições 20 e 44 do código de barras)**: não eram de
+  uso livre como o manual sugeria — comparando o "Informado x Correto"
+  do relatório, a posição 20 é o dígito verificador Módulo 10 da
+  Agência sozinha, e a posição 44 é o Módulo 10 de (posição20 +
+  Agência + Conta + Nosso Número). `GeraCodBarra2de5()` agora calcula
+  os dois dinamicamente em vez de usar as antigas constantes fixas
+  `cFLivreSafra1`/`cFLivreSafra2` (`'0'`), que foram removidas.
 
 **Pendências antes de usar em produção** (comentários `// TODO SAFRA` no
 código):
 
-- Falta confirmar se o campo livre do código de barras (10 dígitos)
-  espera só a conta (zero-padded à esquerda, como está hoje) ou a
-  conta+DV concatenados — ver comentário ao lado de `cContaSafra` no
-  código.
-- **`cFLivreSafra1` / `cFLivreSafra2`**: os 2 dígitos de "uso livre" nas
-  posições 20 e 44 do código de barras não são documentados no manual;
-  estão fixos em `'0'` até confirmação com a mesa de implantação do
-  Safra.
 - **Novo campo no banco de dados**: o contador sequencial do nosso
   número do Safra usa `DM.ATCadEm2NOSSONUM3` (mesmo papel de
   `NOSSONUM`/`NOSSONUM2` para BB/Itaú) — esse campo precisa ser criado na
