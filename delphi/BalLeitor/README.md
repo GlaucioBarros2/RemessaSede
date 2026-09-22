@@ -37,13 +37,55 @@ sede.daniel;2026/09/09 11:15;2026/09/09 11:20
 
 - O `.XXX` gerado é salvo dentro da subpasta **`Processados`**, criada
   automaticamente se ainda não existir.
-- O `.txt` original (a contagem) é **movido junto** para `Processados`
-  depois de gerado o `.XXX` — assim os dois ficam juntos para
-  conferência/auditoria, e o mesmo arquivo não é processado de novo no
-  próximo ciclo.
+- O `.txt` original (a contagem) também vai para `Processados` — mas
+  **não é um simples "mover"**: cada linha de produto ganha uma coluna
+  a mais no final, com o **saldo de estoque que o produto tinha antes
+  do ajuste** (ver seção abaixo). O arquivo original na pasta
+  monitorada é apagado depois, já que seu conteúdo (com a coluna
+  extra) passou a existir em `Processados`.
 - Se já existir um arquivo com o mesmo nome em `Processados` (`.txt`
   ou `.XXX`), o programa não sobrescreve: acrescenta `_1`, `_2` etc.
   antes da extensão.
+
+## Saldo anterior ao ajuste (consulta ao banco)
+
+Para cada produto do `bal_*.txt`, o programa consulta `DM.ATCadPro`
+(a mesma tabela de cadastro de produtos usada no ERP, via `UnitDM.pas`)
+pelo código do produto (campo `CODPRO`) e lê o saldo de estoque atual
+(campo `SALDESTOQ`) **antes** de qualquer ajuste. Esse valor é gravado
+como última coluna, depois da apresentação (`A`/`V`), na cópia do
+`.txt` que fica em `Processados`:
+
+```
+022763;0.000;A;150
+020624;0.000;A;30
+007956;4.000;V;4
+005465;628.000;V;700
+```
+
+(números de saldo acima são só exemplo — vêm da consulta ao banco no
+momento do processamento.)
+
+**Importante — dependência do `UnitDM.pas`:**
+- O `BalLeitor` agora precisa do `UnitDM.pas` **e do `UnitDM.dfm`** do
+  seu sistema (ERP) — os mesmos que já usam os componentes Apollo
+  (`ApolloEnv1`, `ApolloConnection1`, `ATCadPro`) já configurados e
+  testados lá. Copie os dois arquivos para dentro de
+  `delphi/BalLeitor/` (junto de `uMain.pas`) antes de compilar.
+- O `UnitDM.pas` que vimos foi compilado em **Delphi 7**, usando
+  pacotes de terceiros (Apollo: `ApoDSet`, `ApWin`, `ApConn`, `ApoEnv`;
+  Rave Reports: `RpDefine`, `RpCon`, `RpRave` etc.). Para o `BalLeitor`
+  (Delphi XE5) compilar com essa unit no `uses`, **esses mesmos
+  pacotes precisam estar instalados no Delphi XE5** também. Se não
+  estiverem, a compilação vai falhar por falta desses componentes —
+  nesse caso, me avise que a gente resolve de outro jeito (por
+  exemplo, uma conexão própria e mais enxuta no `BalLeitor`, sem
+  depender da unit inteira do ERP).
+- Se a conexão falhar ao abrir o programa (banco fora do ar, etc.), o
+  `BalLeitor` **não trava**: grava um erro no log, continua rodando, e
+  o saldo anterior sai como `0` até a conexão voltar a funcionar.
+- Se o código do produto não for encontrado em `ATCadPro`, o saldo
+  anterior também sai como `0`, com um aviso no log.
 
 ## Como o programa roda
 
@@ -97,6 +139,9 @@ Arquivos do projeto:
 - `uMain.pas` / `uMain.dfm` — formulário (sem janela visível), ícone
   de bandeja, timer e toda a lógica de leitura/gravação/movimentação
   dos arquivos.
+- `UnitDM.pas` / `UnitDM.dfm` — **não incluídos neste repositório**;
+  copie os do seu ERP para cá antes de compilar (ver seção "Saldo
+  anterior ao ajuste" abaixo — é de onde vem `DM.ATCadPro`).
 - `res/caixa.ico` — imagem de uma caixinha usada no ícone da bandeja.
 - `exemplo/bal_20260909.txt` — arquivo de exemplo para teste.
 
@@ -137,9 +182,10 @@ além do próprio programa.
      caminho como parâmetro.
 4. Rode o `.exe`, informe o intervalo (ex.: `1`) e confirme.
 5. Verifique se surgiu a pasta `Processados` (dentro da pasta
-   monitorada) com dois arquivos: `bal_20260909.txt` (movido) e
-   `bal_20260909.XXX` (gerado), além do `BalLeitor.log` (na pasta do
-   `.exe`) registrando o processamento.
+   monitorada) com dois arquivos: `bal_20260909.txt` (com a coluna do
+   saldo anterior em cada linha de produto) e `bal_20260909.XXX`
+   (gerado), além do `BalLeitor.log` (na pasta do `.exe`) registrando
+   o processamento.
 6. Verifique se o ícone da caixinha apareceu na bandeja do sistema
    (pode estar atrás da setinha "mostrar ícones ocultos").
 7. Clique com o botão direito no ícone da bandeja e escolha
@@ -152,6 +198,8 @@ além do próprio programa.
 - Linhas em branco são ignoradas; linhas com menos de 2 campos geram
   um aviso no log e são puladas, sem interromper o processamento do
   arquivo.
-- Se a extensão de saída não for literalmente `.XXX`, ou se quiser
-  apagar o `.txt` original em vez de movê-lo, ajuste a constante
-  `EXTENSAO_SAIDA` e o trecho de `TFile.Move` em `uMain.pas`.
+- Se a extensão de saída não for literalmente `.XXX`, ajuste a
+  constante `EXTENSAO_SAIDA` em `uMain.pas`.
+- O campo do código do produto usado na busca é `CODPRO` (função
+  `SaldoAnteriorProduto`, em `uMain.pas`) — ajuste ali se o nome do
+  campo for outro no seu `ATCadPro`.
