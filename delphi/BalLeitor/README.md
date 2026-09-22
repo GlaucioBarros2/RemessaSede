@@ -32,18 +32,59 @@ sede.daniel;2026/09/09 11:15;2026/09/09 11:20
 - O arquivo de saída mantém o mesmo nome base, trocando a extensão
   para `.XXX` (constante `EXTENSAO_SAIDA` em `uMain.pas` — ajuste se a
   extensão real precisar ser outra).
+- O `.XXX` ganha uma **quarta coluna**, depois da apresentação (`A`/`V`):
+  o saldo de estoque que o produto tinha **antes** do ajuste, consultado
+  em `DM.ATCadPro.FieldByName('saldestoq')` pelo código do produto
+  (campo `CODPRO`). Exemplo, para a entrada do topo deste README:
+
+  ```
+  022763;0;A;150
+  020624;0;A;30
+  007956;4;V;4
+  005465;628;V;700
+  005057;620;A;80
+  020620;0;V;12
+  ```
+
+  (os números de saldo acima são só exemplo — vêm da consulta ao banco
+  no momento do processamento.)
 
 ## Pasta "Processados"
 
-- O `.XXX` gerado é salvo dentro da subpasta **`Processados`**, criada
-  automaticamente se ainda não existir.
-- O `.txt` original (a contagem) é **movido junto** para `Processados`
-  depois de gerado o `.XXX` — assim os dois ficam juntos para
-  conferência/auditoria, e o mesmo arquivo não é processado de novo no
-  próximo ciclo.
+- O `.XXX` gerado (já com a coluna do saldo anterior — ver acima) é
+  salvo dentro da subpasta **`Processados`**, criada automaticamente
+  se ainda não existir.
+- O `.txt` original (a contagem, sem alteração nenhuma) é **movido
+  junto** para `Processados` depois de gerado o `.XXX` — assim os dois
+  ficam juntos para conferência/auditoria, e o mesmo arquivo não é
+  processado de novo no próximo ciclo.
 - Se já existir um arquivo com o mesmo nome em `Processados` (`.txt`
   ou `.XXX`), o programa não sobrescreve: acrescenta `_1`, `_2` etc.
   antes da extensão.
+
+## Dependência: `UnitDM.pas` (conexão com o banco do ERP)
+
+Para consultar o saldo anterior, o `BalLeitor` agora depende do
+`UnitDM.pas` **e do `UnitDM.dfm`** do seu sistema (ERP) — os mesmos
+que já usam os componentes Apollo (`ApolloEnv1`, `ApolloConnection1`,
+`ATCadPro`) configurados e testados lá.
+
+- Copie os dois arquivos para dentro de `delphi/BalLeitor/` (junto de
+  `uMain.pas`) antes de compilar.
+- O `UnitDM.pas` que vimos foi compilado em **Delphi 7**, usando
+  pacotes de terceiros (Apollo: `ApoDSet`, `ApWin`, `ApConn`, `ApoEnv`;
+  Rave Reports: `RpDefine`, `RpCon`, `RpRave` etc.). Para o `BalLeitor`
+  (Delphi XE5) compilar com essa unit no `uses`, **esses mesmos
+  pacotes precisam estar instalados no Delphi XE5** também — se não
+  estiverem, a compilação falha por falta desses componentes, e aí
+  precisamos de uma conexão mais enxuta, só para o `BalLeitor`.
+- Se a conexão falhar ao abrir o programa (banco fora do ar, etc.), o
+  `BalLeitor` **não trava**: grava um erro no log, continua rodando, e
+  o saldo anterior sai como `0` até a conexão voltar a funcionar.
+- Se o código do produto não for encontrado em `ATCadPro`, o saldo
+  anterior também sai como `0`, com um aviso no log.
+- O campo de busca é `CODPRO`; se no seu `ATCadPro` for outro nome,
+  ajuste em `SaldoAnteriorProduto`, no `uMain.pas`.
 
 ## Como o programa roda
 
@@ -97,6 +138,9 @@ Arquivos do projeto:
 - `uMain.pas` / `uMain.dfm` — formulário (sem janela visível), ícone
   de bandeja, timer e toda a lógica de leitura/gravação/movimentação
   dos arquivos.
+- `UnitDM.pas` / `UnitDM.dfm` — **não incluídos neste repositório**;
+  copie os do seu ERP para cá antes de compilar (ver seção
+  "Dependência: UnitDM.pas" acima — é de onde vem `DM.ATCadPro`).
 - `res/caixa.ico` — imagem de uma caixinha usada no ícone da bandeja.
 - `exemplo/bal_20260909.txt` — arquivo de exemplo para teste.
 
@@ -137,8 +181,9 @@ além do próprio programa.
      caminho como parâmetro.
 4. Rode o `.exe`, informe o intervalo (ex.: `1`) e confirme.
 5. Verifique se surgiu a pasta `Processados` (dentro da pasta
-   monitorada) com dois arquivos: `bal_20260909.txt` (movido) e
-   `bal_20260909.XXX` (gerado), além do `BalLeitor.log` (na pasta do
+   monitorada) com dois arquivos: `bal_20260909.txt` (movido, sem
+   alteração) e `bal_20260909.XXX` (gerado, com a coluna do saldo
+   anterior em cada linha), além do `BalLeitor.log` (na pasta do
    `.exe`) registrando o processamento.
 6. Verifique se o ícone da caixinha apareceu na bandeja do sistema
    (pode estar atrás da setinha "mostrar ícones ocultos").
