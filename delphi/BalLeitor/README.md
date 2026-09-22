@@ -32,6 +32,28 @@ sede.daniel;2026/09/09 11:15;2026/09/09 11:20
 - O arquivo de saída mantém o mesmo nome base, trocando a extensão
   para `.XXX` (constante `EXTENSAO_SAIDA` em `uMain.pas` — ajuste se a
   extensão real precisar ser outra).
+- O `.XXX` ganha uma **quarta coluna**, depois da apresentação (`A`/`V`):
+  o saldo de estoque que o produto tinha **antes** do ajuste, lido em
+  `ATCadPro.FieldByName('saldestoq')` (pela chave `codpro`) antes de
+  qualquer `Edit`/`Post` nesse campo. Exemplo, para a entrada do topo
+  deste README:
+
+  ```
+  022763;0;A;150
+  020624;0;A;30
+  007956;4;V;4
+  005465;628;V;700
+  005057;620;A;80
+  020620;0;V;12
+  ```
+
+  (números de saldo acima são só exemplo — vêm da consulta ao banco no
+  momento do processamento, antes do acerto de estoque daquela linha.)
+- Também mantém, sem alteração, a lógica de acerto de estoque já
+  existente (gera lançamento em `ATCadMov` como entrada `AE` ou saída
+  `AS`, atualiza os contadores em `ATCadEm2` e grava o novo saldo em
+  `ATCadPro`) — a única mudança é que o saldo é lido e guardado **antes**
+  desse acerto, para poder ir para o `.XXX`.
 
 ## Pasta "Processados"
 
@@ -44,6 +66,19 @@ sede.daniel;2026/09/09 11:15;2026/09/09 11:20
 - Se já existir um arquivo com o mesmo nome em `Processados` (`.txt`
   ou `.XXX`), o programa não sobrescreve: acrescenta `_1`, `_2` etc.
   antes da extensão.
+
+## Conexão com o banco (Apollo)
+
+O `BalLeitor` se conecta direto no banco do ERP pelos componentes
+Apollo declarados no próprio formulário (`ApolloConnection1`,
+`ApolloEnv1`, e as tabelas `ATCadPro`, `ATCadMov`, `ATCadApr`,
+`ATCadEm2`) — sem depender de nenhuma outra unit. As tabelas são
+abertas quando o formulário é criado/ativado e fechadas ao encerrar.
+
+Isso significa que, para compilar, o `uMain.dfm` precisa ter esses
+componentes configurados (mesma conexão/tabelas já usadas no restante
+do sistema) — como esse `.dfm` é específico do seu ambiente, mantenha
+sua própria cópia com os componentes já ligados ao banco correto.
 
 ## Como o programa roda
 
@@ -95,8 +130,9 @@ Arquivos do projeto:
 - `BalLeitor.dpr` — arquivo principal, pergunta o intervalo e inicia o
   formulário.
 - `uMain.pas` / `uMain.dfm` — formulário (sem janela visível), ícone
-  de bandeja, timer e toda a lógica de leitura/gravação/movimentação
-  dos arquivos.
+  de bandeja, timer, componentes Apollo de conexão com o banco e toda
+  a lógica de leitura/gravação/movimentação dos arquivos e de acerto
+  de estoque.
 - `res/caixa.ico` — imagem de uma caixinha usada no ícone da bandeja.
 - `exemplo/bal_20260909.txt` — arquivo de exemplo para teste.
 
@@ -137,9 +173,12 @@ além do próprio programa.
      caminho como parâmetro.
 4. Rode o `.exe`, informe o intervalo (ex.: `1`) e confirme.
 5. Verifique se surgiu a pasta `Processados` (dentro da pasta
-   monitorada) com dois arquivos: `bal_20260909.txt` (movido) e
-   `bal_20260909.XXX` (gerado), além do `BalLeitor.log` (na pasta do
-   `.exe`) registrando o processamento.
+   monitorada) com dois arquivos: `bal_20260909.txt` (movido, sem
+   alteração) e `bal_20260909.XXX` (gerado, com a coluna do saldo
+   anterior em cada linha), além do `BalLeitor.log` (na pasta do
+   `.exe`) registrando o processamento. Confira também se os
+   lançamentos correspondentes apareceram em `ATCadMov`/`ATCadEm2` e
+   se `ATCadPro.saldestoq` foi atualizado.
 6. Verifique se o ícone da caixinha apareceu na bandeja do sistema
    (pode estar atrás da setinha "mostrar ícones ocultos").
 7. Clique com o botão direito no ícone da bandeja e escolha
@@ -155,3 +194,6 @@ além do próprio programa.
 - Se a extensão de saída não for literalmente `.XXX`, ou se quiser
   apagar o `.txt` original em vez de movê-lo, ajuste a constante
   `EXTENSAO_SAIDA` e o trecho de `TFile.Move` em `uMain.pas`.
+- A busca do produto usa a chave `codpro` (`ATCadPro.SetOrder(1);
+  ATCadPro.Seek(cCodigo)`); se o índice 1 de `ATCadPro` for outro
+  campo no seu cadastro, ajuste em `ProcessarArquivo`, no `uMain.pas`.

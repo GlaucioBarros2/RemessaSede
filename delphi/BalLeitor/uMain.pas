@@ -5,7 +5,8 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, System.Types, System.IOUtils,
-  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus;
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus,
+  Data.DB, ApoDSet, apoEnv, apWin, ApConn;
 
 const
   PASTA_PADRAO      = 'F:\DataNet\Balanco\';
@@ -22,12 +23,20 @@ type
     mnuProcessarAgora: TMenuItem;
     mnuSeparador1: TMenuItem;
     mnuEncerrar: TMenuItem;
+    ApolloConnection1: TApolloConnection;
+    ApolloEnv1: TApolloEnv;
+    ATCadPro: TApolloTable;
+    ATCadMov: TApolloTable;
+    ATCadApr: TApolloTable;
+    ATCadEm2: TApolloTable;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure TrayIcon1DblClick(Sender: TObject);
     procedure mnuProcessarAgoraClick(Sender: TObject);
     procedure mnuEncerrarClick(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     FPasta: string;
     FProcessando: Boolean;
@@ -37,6 +46,7 @@ type
     function NomeSemColisao(const cPastaDestino, cNomeArquivo: string): string;
     procedure ProcessarArquivo(const cArqEntrada: string);
     procedure VarrerPasta;
+    function StrZero(Value, Tam: Integer): string;
   public
     procedure IniciarMonitoramento(nMinutos: Integer);
   end;
@@ -49,6 +59,22 @@ implementation
 {$R *.dfm}
 
 { TfrmMain }
+
+procedure TfrmMain.FormActivate(Sender: TObject);
+begin
+  ATCadEm2.Open;
+  ATCadPro.Open;
+  ATCadMov.Open;
+  ATCadApr.Open;
+end;
+
+procedure TfrmMain.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  ATCadEm2.Close;
+  ATCadPro.Close;
+  ATCadMov.Close;
+  ATCadApr.Close;
+end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 var
@@ -71,6 +97,11 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
+  ATCadEm2.Close;
+  ATCadPro.Close;
+  ATCadMov.Close;
+  ATCadApr.Close;
+
   Log('Programa encerrado.');
   TrayIcon1.Visible := False;
 end;
@@ -220,7 +251,7 @@ var
   cNomeTxtDestino, cArqTxtDestino: string;
   aCampos: TArray<string>;
   cCodigo, cApresentacao: string;
-  nQuantidade: Integer;
+  nQuantidade, nSaldoAnterior: Integer;
   nLinhasLidas, nLinhasGravadas: Integer;
 begin
   slEntrada := TStringList.Create;
@@ -234,6 +265,11 @@ begin
         ExtractFileName(cArqEntrada));
       Exit;
     end;
+
+    ATCadEm2.Open;
+    ATCadApr.Open;
+    ATCadMov.Open;
+    ATCadPro.Open;
 
     nLinhasLidas    := 0;
     nLinhasGravadas := 0;
@@ -262,13 +298,96 @@ begin
       if Length(aCampos) >= 3 then
         cApresentacao := Trim(aCampos[2]);
 
-      if cApresentacao <> '' then
-        slSaida.Add(Format('%s;%d;%s', [cCodigo, nQuantidade, cApresentacao]))
+      // Posiciona no produto e guarda o saldo de estoque ANTES de
+      // qualquer ajuste (saldestoq), para gravar como ultima coluna
+      // do .XXX - precisa ser lido aqui, antes do Edit/Post la embaixo
+      // que atualiza esse mesmo campo.
+      ATCadPro.SetOrder(1);
+      ATCadPro.Seek(cCodigo);
+      if ATCadPro.FieldByName('codpro').AsString = cCodigo then
+        nSaldoAnterior := ATCadPro.FieldByName('saldestoq').AsInteger
       else
-        slSaida.Add(Format('%s;%d', [cCodigo, nQuantidade]));
+        nSaldoAnterior := 0;
+
+      if cApresentacao <> '' then
+        slSaida.Add(Format('%s;%d;%s;%d', [cCodigo, nQuantidade, cApresentacao, nSaldoAnterior]))
+      else
+        slSaida.Add(Format('%s;%d;;%d', [cCodigo, nQuantidade, nSaldoAnterior]));
 
       Inc(nLinhasGravadas);
+
+      // cria no sacadmov.dbf o acerto de entrada ou saida
+      if ATCadPro.FieldByName('codpro').AsString = cCodigo then
+        begin
+          if (cApresentacao = 'A') and (ATCadPro.FieldByName('codatc').AsString <> '999') then
+            begin
+              ATCadApr.SetOrder(1);
+              ATCadApr.Seek(ATCadPro.FieldByName('codatc').AsString);
+
+              nQuantidade := nQuantidade * ATCadApr.FieldByName('qtde').AsInteger
+            end;
+        end;
+
+      if ATCadPro.FieldByName('saldestoq').AsInteger < nQuantidade then   // entrada
+        begin
+          ATCadEm2.Edit;
+          if ATCadEm2.FieldByName('NUMACENT').AsInteger >= 999999999 then
+            ATCadEm2.FieldByName('NUMACENT').AsString := '0000000001'
+          else
+            ATCadEm2.FieldByName('NUMACENT').AsString := StrZero(ATCadEm2.FieldByName('NUMACENT').AsInteger + 1,10);
+          ATCadEm2.Post;
+
+          // faz o acerto
+          ATCadMov.Append;
+          ATCadMov.FieldByName('NUMDOC').AsString     := ATCadEm2.FieldByName('NUMACENT').AsString;
+          ATCadMov.FieldByName('DTMOV').AsDateTime    := Now;
+          ATCadMov.FieldByName('NATUMOV').AsString    := 'AE';
+          ATCadMov.FieldByName('CODPRO').AsString     := ATCadPro.FieldByName('codpro').AsString;
+          ATCadMov.FieldByName('QUANTMOV').AsInteger  := nQuantidade - ATCadPro.FieldByName('saldestoq').AsInteger;
+          ATCadMov.FieldByName('QUANTMOV2').AsInteger := nQuantidade - ATCadPro.FieldByName('saldestoq').AsInteger;
+          ATCadMov.FieldByName('CONTROLE').AsString   := '0';
+          ATCadMov.FieldByName('CODAPR').AsString     := ATCadPro.FieldByName('codapr').AsString;
+          ATCadMov.FieldByName('LEGENMOV').AsString   := '1';
+          ATCadMov.Post;
+
+          ATCadPro.Edit;
+          ATCadPro.FieldByName('saldestoq').AsInteger := nQuantidade;
+          ATCadPro.Post;
+        end
+      else
+      if ATCadPro.FieldByName('saldestoq').AsInteger > nQuantidade then   // saida
+        begin
+          ATCadEm2.Edit;
+          if ATCadEm2.FieldByName('NUMACSAI').AsInteger >= 999999999 then
+            ATCadEm2.FieldByName('NUMACSAI').AsString := '0000000001'
+          else
+            ATCadEm2.FieldByName('NUMACSAI').AsString := StrZero(ATCadEm2.FieldByName('NUMACSAI').AsInteger + 1,10);
+          ATCadEm2.Post;
+
+          // faz o acerto
+          ATCadMov.Append;
+          ATCadMov.FieldByName('NUMDOC').AsString     := ATCadEm2.FieldByName('NUMACSAI').AsString;
+          ATCadMov.FieldByName('DTMOV').AsDateTime    := Now;
+          ATCadMov.FieldByName('NATUMOV').AsString    := 'AS';
+          ATCadMov.FieldByName('CODPRO').AsString     := ATCadPro.FieldByName('codpro').AsString;
+          ATCadMov.FieldByName('QUANTMOV').AsInteger  := ATCadPro.FieldByName('saldestoq').AsInteger - nQuantidade;
+          ATCadMov.FieldByName('QUANTMOV2').AsInteger := ATCadPro.FieldByName('saldestoq').AsInteger - nQuantidade;
+          ATCadMov.FieldByName('CONTROLE').AsString   := '0';
+          ATCadMov.FieldByName('CODAPR').AsString     := ATCadPro.FieldByName('codapr').AsString;
+          ATCadMov.FieldByName('LEGENMOV').AsString   := '1';
+          ATCadMov.Post;
+
+          ATCadPro.Edit;
+          ATCadPro.FieldByName('saldestoq').AsInteger := nQuantidade;
+          ATCadPro.Post;
+        end
+
     end;
+
+    ATCadEm2.Close;
+    ATCadApr.Close;
+    ATCadMov.Close;
+    ATCadPro.Close;
 
     cPastaDestino := PastaProcessados;
 
@@ -290,6 +409,11 @@ begin
     slEntrada.Free;
     slSaida.Free;
   end;
+end;
+
+function TfrmMain.StrZero(Value, Tam: Integer): string;
+begin
+  Result := Copy(IntToStr(Value + Round(Exp(Tam * ln(10)))), 2, Tam)
 end;
 
 {-------------------------------------------------------------------------
