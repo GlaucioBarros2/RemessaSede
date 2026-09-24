@@ -113,24 +113,51 @@ begin
   else
     begin
       cNumNot := DM.ATCadTitNUMMOV.AsString;
-      IF Fileexists('F:\DATANET\BOL\BOL'+cNumNot+'.PDF') then
-         DeleteFile('F:\DATANET\BOL\BOL'+cNumNot+'.PDF');
 
-      RvSystemBoletoMes.DoNativeOutput           := False;
-      RvSystemBoletoMes.DefaultDest              := rdFile;
-      RvSystemBoletoMes.SystemOptions            := RvSystemBoletoMes.SystemOptions - [soShowStatus];
-      RvSystemBoletoMes.SystemFiler.StatusFormat := 'Gerando PDF pag. %p';
-      RvSystemBoletoMes.RenderObject             := RvRenderPDF1;
-      RvSystemBoletoMes.SystemSetups             := RvSystemBoletoMes.SystemSetups - [ssAllowSetup];
-      RvSystemBoletoMes.OutputFileName           := 'F:\DATANET\BOL\BOL'+cNumNot+'.PDF';
-      RvSystemBoletoMes.Execute;
+      if DirectoryExists('c:\DATANET\fontes\') then
+        begin
+          IF Fileexists('C:\DATANET\BOL\BOL'+cNumNot+'.PDF') then
+             DeleteFile('C:\DATANET\BOL\BOL'+cNumNot+'.PDF');      // deleta para criar um novo
 
-      // imprime o pdf direto para impressora
-      //ShellExecute(Application.handle, 'print',PChar('F:\DATANET\BOL\BOL'+cNumNot+'.PDF'), nil,nil,SW_HIDE);
-      ShellExecute(Application.handle, 'open',PChar('F:\DATANET\BOL\BOL'+cNumNot+'.PDF'), nil,nil,SW_SHOWMAXIMIZED);
+          RvSystemBoletoMes.DoNativeOutput           := False;
+          RvSystemBoletoMes.DefaultDest              := rdFile;      // gera um novo
+          RvSystemBoletoMes.SystemOptions            := RvSystemBoletoMes.SystemOptions - [soShowStatus];
+          RvSystemBoletoMes.SystemFiler.StatusFormat := 'Gerando PDF pag. %p';
+          RvSystemBoletoMes.RenderObject             := RvRenderPDF1;
+          RvSystemBoletoMes.SystemSetups             := RvSystemBoletoMes.SystemSetups - [ssAllowSetup];
+          RvSystemBoletoMes.OutputFileName           := 'C:\DATANET\BOL\BOL'+cNumNot+'.PDF';
+          RvSystemBoletoMes.Execute;
 
-     close;
-    end
+          // imprime o pdf direto para impressora
+          // ShellExecute(Application.handle, 'print',PChar('F:\DATANET\BOL\BOL'+cNumNot+'.PDF'), nil,nil,SW_HIDE);
+
+          // abre em tela
+          ShellExecute(Application.handle, 'open',PChar('C:\DATANET\BOL\BOL'+cNumNot+'.PDF'), nil,nil,SW_SHOWMAXIMIZED);
+        end
+      else
+        begin
+          IF Fileexists('F:\DATANET\BOL\BOL'+cNumNot+'.PDF') then
+             DeleteFile('F:\DATANET\BOL\BOL'+cNumNot+'.PDF');      // deleta para criar um novo
+
+          RvSystemBoletoMes.DoNativeOutput           := False;
+          RvSystemBoletoMes.DefaultDest              := rdFile;      // gera um novo
+          RvSystemBoletoMes.SystemOptions            := RvSystemBoletoMes.SystemOptions - [soShowStatus];
+          RvSystemBoletoMes.SystemFiler.StatusFormat := 'Gerando PDF pag. %p';
+          RvSystemBoletoMes.RenderObject             := RvRenderPDF1;
+          RvSystemBoletoMes.SystemSetups             := RvSystemBoletoMes.SystemSetups - [ssAllowSetup];
+          RvSystemBoletoMes.OutputFileName           := 'F:\DATANET\BOL\BOL'+cNumNot+'.PDF';
+          RvSystemBoletoMes.Execute;
+
+          // imprime o pdf direto para impressora
+          // ShellExecute(Application.handle, 'print',PChar('F:\DATANET\BOL\BOL'+cNumNot+'.PDF'), nil,nil,SW_HIDE);
+
+          // abre em tela
+          ShellExecute(Application.handle, 'open',PChar('F:\DATANET\BOL\BOL'+cNumNot+'.PDF'), nil,nil,SW_SHOWMAXIMIZED);
+
+        end;
+    end;
+
+    close;
 end;
 
 procedure TFormBoletoMes.RvSystemBoletoMesPrint(Sender: TObject);
