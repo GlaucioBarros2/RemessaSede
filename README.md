@@ -248,6 +248,16 @@ código de barras gerado por este arquivo):
   Agência + Conta + Nosso Número). `GeraCodBarra2de5()` agora calcula
   os dois dinamicamente em vez de usar as antigas constantes fixas
   `cFLivreSafra1`/`cFLivreSafra2` (`'0'`), que foram removidas.
+- **Nosso Número impresso no boleto com sufixo indevido**: a validação
+  real do Safra acusou "Nosso número deve conter somente 9 dígitos". O
+  campo impresso (`PrintXY` logo abaixo da imagem do boleto, 4
+  ocorrências no código — 1ª e 2ª via) estava reaproveitando a
+  convenção do Itaú de exibir `NossoNumero + "-" + DV` (dígito
+  verificador Módulo 10 calculado sobre Agência+Conta+NossoNúmero),
+  convenção que o Safra não usa. Corrigido para imprimir só o número
+  puro de 9 dígitos (`DM.ATCadTitNOSSONUM.AsString`), igual ao que já
+  era feito para o BB. Não afeta o código de barras nem a linha
+  digitável, que já usavam DAC1/DAC2 próprios do Safra (ver item acima).
 
 **Pendências antes de usar em produção** (comentários `// TODO SAFRA` no
 código):

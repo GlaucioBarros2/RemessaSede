@@ -222,7 +222,7 @@ begin
         if DM.ATCadTitCODPOR.AsString = '001' then
           PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
         else if DM.ATCadTitCODPOR.AsString = '422' then
-          PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaBarraSafra+DM.ATCadTitNOSSONUM.AsString))
+          PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
         else
           PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10('832211901'+DM.ATCadTitNOSSONUM.AsString))
       else
@@ -303,7 +303,7 @@ begin
           if DM.ATCadTitCODPOR.AsString = '001' then
             PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
           else if DM.ATCadTitCODPOR.AsString = '422' then
-            PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaBarraSafra+DM.ATCadTitNOSSONUM.AsString))
+            PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
           else
             PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10('832211901'+DM.ATCadTitNOSSONUM.AsString));
         end;
@@ -391,7 +391,7 @@ begin
             if DM.ATCadTitCODPOR.AsString = '001' then
               PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
             else if DM.ATCadTitCODPOR.AsString = '422' then
-              PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaBarraSafra+DM.ATCadTitNOSSONUM.AsString))
+              PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
             else
               PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10('832211901'+DM.ATCadTitNOSSONUM.AsString))
           else
@@ -473,7 +473,7 @@ begin
               if DM.ATCadTitCODPOR.AsString = '001' then
                 PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
               else if DM.ATCadTitCODPOR.AsString = '422' then
-                PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10(cAgSafra+cContaBarraSafra+DM.ATCadTitNOSSONUM.AsString))
+                PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString)
               else
                 PrintXY(16.1,Linha+1.4,DM.ATCadTitNOSSONUM.AsString+'-'+Modulo10('832211901'+DM.ATCadTitNOSSONUM.AsString))
             end;
