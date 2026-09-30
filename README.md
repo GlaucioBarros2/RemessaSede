@@ -272,6 +272,51 @@ código):
   impresso precisa espelhar exatamente o que vai na remessa, por isso a
   largura aqui é 6 (e não 8 como no Itaú).
 
+### Corrigido a partir dos PDFs de boleto emitidos (validação visual)
+
+O usuário enviou 3 boletos PDF reais gerados pelo sistema (`BOL29822211`,
+`BOL29745910`, `BOL29822411`) apontando 5 problemas de layout/conteúdo,
+confirmados nos próprios PDFs:
+
+- **Beneficiário sem CNPJ**: o campo `Beneficiário` mostrava só a razão
+  social (`SEDE DAS MIUDEZAS ATACADO LTDA`). Adicionado `CNPJ:
+  40.868.234/0001-70` na mesma linha, formatado via `formatacnpj()`
+  (nova constante `cCNPJEmpresa`, mesmo número já usado na chave PIX).
+- **Sem nomenclatura "Beneficiário Final"**: incluído o rótulo
+  `Beneficiário Final:` ao final da mesma linha do Beneficiário (o dado
+  em si continua em branco, pois não há endosso/vinculação — mesma
+  convenção já usada no Segmento Q do `REMESSA.PRG`, que zera os campos
+  de beneficiário final para o Safra).
+- **Agência/Código Cedente errado**: os PDFs mostravam `1440/00587488-9`;
+  o correto é `14400/005874889` (agência com 5 dígitos, conta+DV
+  concatenados sem hífen). Nova constante `cAgSafraLabel = '14400'`
+  usada **só no rótulo impresso** — a constante `cAgSafra` (`'1440'`, 4
+  dígitos) usada no cálculo do dígito verificador do código de barras
+  (`DAC1`/`DAC2` em `GeraCodBarra2de5()`) foi mantida sem alteração, pois
+  já era validada contra o relatório real da Safra e uma mudança ali
+  alteraria o Módulo 10 calculado isoladamente sobre a agência.
+- **Carteira errada**: os PDFs mostravam `422` no campo `Carteira` (bug:
+  o código reaproveitava por engano a constante `cPrefixoNNSafra`, que é
+  o prefixo do nosso número, não a carteira). Corrigido para imprimir
+  `1`, conforme solicitado.
+- **Mensagem de local de pagamento desatualizada**: o texto ("ATÉ O
+  VENCIMENTO PAGUE PREFERENCIALMENTE NO BANCO SAFRA") sugeria que só
+  seria aceito até o vencimento / preferencialmente no Safra, o que não
+  reflete mais a regra de compensação bancária atual. Substituído nas 3
+  vias do `boleto 2v SAFRA.bmp` (imagem, não código Delphi — o texto é
+  desenhado no bitmap) por **"PAGÁVEL EM QUALQUER BANCO DO SISTEMA DE
+  COMPENSAÇÃO"**, mesma fonte/tamanho/posição do texto original.
+
+**Pendente**: o item 6 do pedido do usuário ("linha digitável e código de
+barras possuem erros, ver cálculos completos na 4ª página do anexo") faz
+referência a um arquivo com os cálculos detalhados que não chegou a ser
+enviado — os 3 PDFs recebidos mostram os valores já gerados, mas não o
+comparativo "correto x informado" necessário para localizar o erro com
+segurança. Conferido o que dá para conferir sem esse anexo (o valor do
+título e o fator de vencimento batem corretamente com os 3 exemplos
+recebidos); aguardando o arquivo para revisar `GeraCodBarra2de5()` e
+`LinhaDigitavel()`.
+
 ## Template visual do boleto (`boleto 2v SAFRA.bmp`)
 
 `delphi/ImBoletoMes/boleto 2v SAFRA.bmp` é a imagem de fundo impressa por

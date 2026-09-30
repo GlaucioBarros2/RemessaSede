@@ -96,6 +96,14 @@ const
                                     // codigo de barras (campo CONTA de 10 digitos),
                                     // confirmada pelo relatorio de validacao da Safra
   cPrefixoNNSafra = '422';         // prefixo do nosso numero livre do Safra
+  cAgSafraLabel   = '14400';       // agencia exibida no campo "Agencia/Codigo
+                                    // Cedente" do boleto (rotulo impresso) -
+                                    // diferente do cAgSafra (4 digitos) usado
+                                    // no calculo do codigo de barras; NAO
+                                    // alterar cAgSafra sem confirmar que o
+                                    // calculo do codigo de barras tambem muda
+  cCNPJEmpresa    = '40868234000170'; // CNPJ da SEDE DAS MIUDEZAS ATACADO LTDA
+                                    // (mesmo numero ja usado na chave PIX)
 // ===========================================================================
 
 procedure TFormBoletoMes.BitBtn1Click(Sender: TObject);
@@ -230,12 +238,12 @@ begin
         PrintXY(16.6,Linha+0.1,FormatDateTime('dd/mm/yyyy',DM.ATCadTitDTPRORROG.AsVariant))
       else
         PrintXY(16.6,Linha+0.1,FormatDateTime('dd/mm/yyyy',DM.ATCadTitDTVENCLIM.AsVariant));
-      PrintXY(2.6, Linha+0.7,'SEDE DAS MIUDEZAS ATACADO LTDA');
+      PrintXY(2.6, Linha+0.7,'SEDE DAS MIUDEZAS ATACADO LTDA   CNPJ: '+formatacnpj(cCNPJEmpresa)+'   Beneficiário Final:');
 
       if DM.ATCadTitCODPOR.AsString = '001' then
         PrintXY(16.6,Linha+0.75,'2811-8/ 114546-0')
       else if DM.ATCadTitCODPOR.AsString = '422' then
-        PrintXY(16.6,Linha+0.75,cAgSafra+'/'+cContaSafra+'-'+cContaDVSafra)
+        PrintXY(16.6,Linha+0.75,cAgSafraLabel+'/'+cContaSafra+cContaDVSafra)
       else
         PrintXY(16.6,Linha+0.75,'8322/11901-0');
 
@@ -338,7 +346,7 @@ begin
       if DM.ATCadTitCODPOR.AsString = '001' then
         PrintXY(5.5,  Linha+2,'17-027')
       else if DM.ATCadTitCODPOR.AsString = '422' then
-        PrintXY(5.5,  Linha+2,cPrefixoNNSafra)
+        PrintXY(5.5,  Linha+2,'1')
       else
         PrintXY(5.5,  Linha+2,'109');
 
@@ -399,12 +407,12 @@ begin
             PrintXY(16.6,Linha+0.1,FormatDateTime('dd/mm/yyyy',DM.ATCadTitDTPRORROG.AsVariant))
           else
             PrintXY(16.6,Linha+0.1,FormatDateTime('dd/mm/yyyy',DM.ATCadTitDTVENCLIM.AsVariant));
-          PrintXY(2.6, Linha+0.7,'SEDE DAS MIUDEZAS ATACADO LTDA');
+          PrintXY(2.6, Linha+0.7,'SEDE DAS MIUDEZAS ATACADO LTDA   CNPJ: '+formatacnpj(cCNPJEmpresa)+'   Beneficiário Final:');
 
           if DM.ATCadTitCODPOR.AsString = '001' then
             PrintXY(16.6,Linha+0.75,'2811-8/ 114546-0')
           else if DM.ATCadTitCODPOR.AsString = '422' then
-            PrintXY(16.6,Linha+0.75,cAgSafra+'/'+cContaSafra+'-'+cContaDVSafra)
+            PrintXY(16.6,Linha+0.75,cAgSafraLabel+'/'+cContaSafra+cContaDVSafra)
           else
             PrintXY(16.6,Linha+0.75,'8322/11901-0');
 
@@ -509,7 +517,7 @@ begin
           if DM.ATCadTitCODPOR.AsString = '001' then
             PrintXY(5.5,  Linha+2,'17-027')
           else if DM.ATCadTitCODPOR.AsString = '422' then
-            PrintXY(5.5,  Linha+2,cPrefixoNNSafra)
+            PrintXY(5.5,  Linha+2,'1')
           else
             PrintXY(5.5,  Linha+2,'109');
 
