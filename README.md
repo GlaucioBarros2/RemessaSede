@@ -279,26 +279,31 @@ O usuário enviou 3 boletos PDF reais gerados pelo sistema (`BOL29822211`,
 confirmados nos próprios PDFs:
 
 - **Beneficiário sem CNPJ**: o campo `Beneficiário` mostrava só a razão
-  social (`SEDE DAS MIUDEZAS ATACADO LTDA`). Adicionado `CNPJ:
-  40.868.234/0001-70` na mesma linha, formatado via `formatacnpj()`
-  (nova constante `cCNPJEmpresa`, mesmo número já usado na chave PIX).
-- **Sem nomenclatura "Beneficiário Final"**: incluído o rótulo
-  `Beneficiário Final:` ao final da mesma linha do Beneficiário (o dado
-  em si continua em branco, pois não há endosso/vinculação — mesma
-  convenção já usada no Segmento Q do `REMESSA.PRG`, que zera os campos
-  de beneficiário final para o Safra).
+  social (`SEDE DAS MIUDEZAS ATACADO LTDA`). Corrigido para `SEDE DAS
+  MIUDEZAS ATACADO LTDA - 40.868.234/0001-70` (nome + `" - "` + CNPJ
+  formatado via `formatacnpj()`, nova constante `cCNPJEmpresa` — mesmo
+  número já usado na chave PIX), exatamente no formato do exemplo
+  oficial enviado pela Safra.
+- **Sem nomenclatura "Beneficiário Final"**: o rótulo `Beneficiário
+  Final:` é um campo **separado** do Beneficiário no layout oficial da
+  Safra (fica perto do Pagador/Endereço, antes do código de barras), não
+  um sufixo da mesma linha. Adicionado como linha própria
+  (`PrintXY(1.7,Linha+0.9,...)`, logo abaixo do endereço do pagador, nas
+  2 vias). O dado em si continua em branco, pois não há
+  endosso/vinculação — mesma convenção já usada no Segmento Q do
+  `REMESSA.PRG`, que zera os campos de beneficiário final para o Safra.
 - **Agência/Código Cedente errado**: os PDFs mostravam `1440/00587488-9`;
-  o correto é `14400/005874889` (agência com 5 dígitos, conta+DV
-  concatenados sem hífen). Nova constante `cAgSafraLabel = '14400'`
-  usada **só no rótulo impresso** — a constante `cAgSafra` (`'1440'`, 4
-  dígitos) usada no cálculo do dígito verificador do código de barras
-  (`DAC1`/`DAC2` em `GeraCodBarra2de5()`) foi mantida sem alteração, pois
-  já era validada contra o relatório real da Safra e uma mudança ali
-  alteraria o Módulo 10 calculado isoladamente sobre a agência.
+  o correto, confirmado pelo exemplo oficial da Safra, é `14400 /
+  005874889` (agência com 5 dígitos, espaço, barra, espaço, conta+DV
+  concatenados). Nova constante `cAgSafraLabel = '14400'` usada **só no
+  rótulo impresso** — a constante `cAgSafra` (`'1440'`, 4 dígitos) usada
+  no cálculo do código de barras foi mantida sem alteração (ver item do
+  código de barras abaixo: o relatório de cálculo da Safra confirmou que
+  `DAC1 = Módulo10(cAgSafra)` usa mesmo os 4 dígitos antigos).
 - **Carteira errada**: os PDFs mostravam `422` no campo `Carteira` (bug:
   o código reaproveitava por engano a constante `cPrefixoNNSafra`, que é
-  o prefixo do nosso número, não a carteira). Corrigido para imprimir
-  `1`, conforme solicitado.
+  o prefixo do nosso número, não a carteira). Corrigido para `01`
+  (confirmado pelo exemplo oficial da Safra — zero à esquerda, não só `1`).
 - **Mensagem de local de pagamento desatualizada**: o texto ("ATÉ O
   VENCIMENTO PAGUE PREFERENCIALMENTE NO BANCO SAFRA") sugeria que só
   seria aceito até o vencimento / preferencialmente no Safra, o que não
@@ -307,15 +312,38 @@ confirmados nos próprios PDFs:
   desenhado no bitmap) por **"PAGÁVEL EM QUALQUER BANCO DO SISTEMA DE
   COMPENSAÇÃO"**, mesma fonte/tamanho/posição do texto original.
 
-**Pendente**: o item 6 do pedido do usuário ("linha digitável e código de
-barras possuem erros, ver cálculos completos na 4ª página do anexo") faz
-referência a um arquivo com os cálculos detalhados que não chegou a ser
-enviado — os 3 PDFs recebidos mostram os valores já gerados, mas não o
-comparativo "correto x informado" necessário para localizar o erro com
-segurança. Conferido o que dá para conferir sem esse anexo (o valor do
-título e o fator de vencimento batem corretamente com os 3 exemplos
-recebidos); aguardando o arquivo para revisar `GeraCodBarra2de5()` e
-`LinhaDigitavel()`.
+### Corrigido: erro na linha digitável e código de barras (item 6)
+
+O usuário enviou o relatório `EDES_CELEST_408_25092026_N3.PDF`, que traz o
+desenvolvimento completo do cálculo (dígito a dígito, com pesos e somas)
+da linha digitável e do código de barras para um boleto real (nosso
+número `422000002`, vencimento `09/10/2026`). Reconstruindo o cálculo a
+partir desse relatório:
+
+- **Causa raiz**: `FatorVencto()` ainda usava a fórmula antiga do Fator
+  de Vencimento (dias corridos desde 07/10/1997), que **estourou 9999 em
+  21/02/2025**. A FEBRABAN definiu que, a partir de 22/02/2025, o fator
+  reinicia em `1000` e passa a contar os dias a partir dessa data. Para
+  `09/10/2026` isso dá fator `1594` — o código antigo calculava `10594`
+  dias e, por causa de um bug em `PadL` (que corta para os 4 primeiros
+  dígitos ao invés dos 4 últimos quando o número tem mais de 4 dígitos),
+  isso virava `1059` em vez de `1594`. É por isso que **todos** os
+  boletos enviados mostravam o mesmo fator `1059`/`1060`, mesmo com
+  vencimentos em dias diferentes.
+- **Correção**: `FatorVencto()` agora usa `1000 + (dias desde
+  22/02/2025)` quando a data de vencimento é `>= 22/02/2025` (o caso
+  normal de uso), preservando a fórmula antiga só para datas anteriores
+  a essa (não deveria mais ocorrer na prática). Essa função é
+  compartilhada por BB/Itaú/Safra, então o bug afetava os 3 bancos, não
+  só o Safra.
+- **O resto da fórmula já estava certo**: refazendo à mão o cálculo do
+  `DAC1`, `DAC2`, dígito verificador do código de barras (`cDv`) e dos 3
+  dígitos verificadores da linha digitável com o fator corrigido
+  (`1594`), os valores batem exatamente com o "Correto" do relatório da
+  Safra. Ou seja, a composição `cAgSafra(4)+cContaBarraSafra(10)` usada
+  em `GeraCodBarra2de5()` já é equivalente, como string concatenada, à
+  composição oficial `Agência(5)+Conta(9)` do manual (`"1440"+"0005874889"
+  == "14400"+"005874889"`) — não precisou mudar.
 
 ## Template visual do boleto (`boleto 2v SAFRA.bmp`)
 

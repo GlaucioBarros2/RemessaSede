@@ -238,12 +238,12 @@ begin
         PrintXY(16.6,Linha+0.1,FormatDateTime('dd/mm/yyyy',DM.ATCadTitDTPRORROG.AsVariant))
       else
         PrintXY(16.6,Linha+0.1,FormatDateTime('dd/mm/yyyy',DM.ATCadTitDTVENCLIM.AsVariant));
-      PrintXY(2.6, Linha+0.7,'SEDE DAS MIUDEZAS ATACADO LTDA   CNPJ: '+formatacnpj(cCNPJEmpresa)+'   Beneficiário Final:');
+      PrintXY(2.6, Linha+0.7,'SEDE DAS MIUDEZAS ATACADO LTDA - '+formatacnpj(cCNPJEmpresa));
 
       if DM.ATCadTitCODPOR.AsString = '001' then
         PrintXY(16.6,Linha+0.75,'2811-8/ 114546-0')
       else if DM.ATCadTitCODPOR.AsString = '422' then
-        PrintXY(16.6,Linha+0.75,cAgSafraLabel+'/'+cContaSafra+cContaDVSafra)
+        PrintXY(16.6,Linha+0.75,cAgSafraLabel+' / '+cContaSafra+cContaDVSafra)
       else
         PrintXY(16.6,Linha+0.75,'8322/11901-0');
 
@@ -346,7 +346,7 @@ begin
       if DM.ATCadTitCODPOR.AsString = '001' then
         PrintXY(5.5,  Linha+2,'17-027')
       else if DM.ATCadTitCODPOR.AsString = '422' then
-        PrintXY(5.5,  Linha+2,'1')
+        PrintXY(5.5,  Linha+2,'01')
       else
         PrintXY(5.5,  Linha+2,'109');
 
@@ -407,12 +407,12 @@ begin
             PrintXY(16.6,Linha+0.1,FormatDateTime('dd/mm/yyyy',DM.ATCadTitDTPRORROG.AsVariant))
           else
             PrintXY(16.6,Linha+0.1,FormatDateTime('dd/mm/yyyy',DM.ATCadTitDTVENCLIM.AsVariant));
-          PrintXY(2.6, Linha+0.7,'SEDE DAS MIUDEZAS ATACADO LTDA   CNPJ: '+formatacnpj(cCNPJEmpresa)+'   Beneficiário Final:');
+          PrintXY(2.6, Linha+0.7,'SEDE DAS MIUDEZAS ATACADO LTDA - '+formatacnpj(cCNPJEmpresa));
 
           if DM.ATCadTitCODPOR.AsString = '001' then
             PrintXY(16.6,Linha+0.75,'2811-8/ 114546-0')
           else if DM.ATCadTitCODPOR.AsString = '422' then
-            PrintXY(16.6,Linha+0.75,cAgSafraLabel+'/'+cContaSafra+cContaDVSafra)
+            PrintXY(16.6,Linha+0.75,cAgSafraLabel+' / '+cContaSafra+cContaDVSafra)
           else
             PrintXY(16.6,Linha+0.75,'8322/11901-0');
 
@@ -517,7 +517,7 @@ begin
           if DM.ATCadTitCODPOR.AsString = '001' then
             PrintXY(5.5,  Linha+2,'17-027')
           else if DM.ATCadTitCODPOR.AsString = '422' then
-            PrintXY(5.5,  Linha+2,'1')
+            PrintXY(5.5,  Linha+2,'01')
           else
             PrintXY(5.5,  Linha+2,'109');
 
@@ -621,6 +621,7 @@ begin
                                 DM.ATCadCliCIDCLI.AsString+' - '+
                                 DM.ATCadCliESTCLI.AsString+' - CEP: '+
                                 dm.ATCadCliCEPCLI.AsString);
+          PrintXY(1.7,Linha+0.9,'Beneficiário Final:');
         end;
 
     end;
@@ -897,7 +898,16 @@ var
 begin
   if dDataVenc < EncodeDate(1997, 10, 7) then
     ShowMessage('O vencimento do boleto deve ser superior à 7-Outubro-1997');
-  FatVencto := Abs(Trunc(dDataVenc) - Trunc(EncodeDate(1997, 10, 7)));
+  // Regra FEBRABAN vigente desde 22/02/2025: o fator de vencimento antigo
+  // (dias corridos desde 07/10/1997) estourava 9999 nessa data; a partir
+  // dai o fator reinicia em 1000 e conta os dias desde entao. Confirmado
+  // via relatorio de validacao real da Safra (EDES_CELEST_408): vencimento
+  // 09/10/2026 -> fator correto = 1594 (nao 1059, que era o valor truncado
+  // pela formula antiga + bug de PadL cortando para os 4 primeiros digitos).
+  if dDataVenc >= EncodeDate(2025, 2, 22) then
+    FatVencto := 1000 + (Trunc(dDataVenc) - Trunc(EncodeDate(2025, 2, 22)))
+  else
+    FatVencto := Abs(Trunc(dDataVenc) - Trunc(EncodeDate(1997, 10, 7)));
   Result := PadL(IntToStr(FatVencto), 4, '0');
 end;
 
