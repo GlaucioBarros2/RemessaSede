@@ -349,26 +349,40 @@ Correto" com 3 dígitos errados (dígito verificador geral do código de
 barras, dígito verificador do 3º grupo da linha digitável, e a própria
 posição 44) — todos consequência de um único erro:
 
-- **Causa raiz**: `DAC2 := Modulo10(DAC1+cAgSafra+cContaBarraSafra+cNossoNumAux)`
+- **Causa raiz (1ª tentativa)**: `DAC2 := Modulo10(DAC1+cAgSafra+cContaBarraSafra+cNossoNumAux)`
   estava errado. Resolvendo por tentativa com o nosso número real do
-  exemplo (`422000002`, DAC2 correto = `2`), a fórmula certa é bem mais
-  simples: **`DAC2 := Modulo10(cNossoNumAux)`** — Módulo 10 do Nosso
-  Número sozinho, no mesmo padrão do `DAC1` (Módulo 10 da Agência
-  sozinha). A fórmula antiga, calculada à mão para esse exemplo, dava
-  `0` em vez de `2`; refazendo o cálculo do dígito verificador geral do
-  código de barras (`cDv`, posição 5) com o `DAC2` corrigido (`2`), o
-  resultado bate exatamente com o `5` do relatório.
+  exemplo (`422000002`, DAC2 correto = `2`), cheguei a `DAC2 :=
+  Modulo10(cNossoNumAux)` — Módulo 10 do Nosso Número sozinho. Essa
+  fórmula batia com o único exemplo disponível até então, mas **era
+  coincidência**: o usuário testou de novo com outro boleto e o campo
+  voltou a dar errado (ver seção seguinte).
 - A composição `cAgSafra(4)+cContaBarraSafra(10)` continua equivalente,
   como string concatenada, à composição oficial `Agência(5)+Conta(9)`
   do manual (`"1440"+"0005874889" == "14400"+"005874889"`), então não
   precisou mudar — o problema nunca esteve nessa parte.
-- O campo `Ag/Cod De Beneficioario`, mesmo com o rótulo impresso já no
-  formato correto (`14400 / 005874889`, confirmado batendo com o
-  relatório), também aparecia `Inválido` nos dois relatórios — hipótese
-  mais provável é que o validador da Safra decodifica esse campo a
-  partir do próprio código de barras para conferir consistência, então
-  também deve passar a `Válido` agora que o código de barras está certo
-  (**ainda não reconfirmado com um novo teste** após este fix).
+
+### Corrigido: "Segundo Fixo" é constante, não calculado — e rótulo "Cedente"→"Beneficiário"
+
+O usuário testou de novo e reportou 2 problemas novos a partir do
+checklist/comparativo do relatório mais recente:
+
+- **`DAC2` ("Segundo Fixo", posição 44) não é um dígito verificador
+  calculado — é um valor FIXO, sempre `"2"`**, independente do nosso
+  número. O nome oficial do campo no layout da Safra já dizia isso
+  ("Fixo"/constante), mas eu tinha interpretado como "uso livre" e
+  tentado calcular um dígito verificador para ele. A tentativa anterior
+  (`Modulo10(cNossoNumAux)`) só batia por coincidência porque o único
+  exemplo testado até então (`422000002`) tem Módulo 10 igual a `2` — com
+  qualquer outro nosso número a conta dava um valor diferente de `2`,
+  então voltava a falhar. Corrigido para `DAC2 := '2'` (constante,
+  igual ao manual). `DAC1` ("Primeiro Fixo", posição 20) continua
+  calculado via `Modulo10(cAgSafra)`, mas isso nunca foi um problema na
+  prática porque a agência desta empresa nunca muda — ou seja, o
+  resultado também é sempre o mesmo valor fixo.
+- **Rótulo "Agência/Código Cedente" → "Agência/Código Beneficiário"**:
+  nomenclatura errada no template `boleto 2v SAFRA.bmp` (texto
+  desenhado na imagem, não código Delphi). Corrigido nas 3 vias, mesma
+  fonte/posição/tamanho do texto original.
 
 ## Template visual do boleto (`boleto 2v SAFRA.bmp`)
 

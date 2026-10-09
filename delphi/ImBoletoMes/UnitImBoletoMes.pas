@@ -67,11 +67,10 @@ uses UnitDM, DB;
 //   1) Agencia/conta ja confirmadas pelo relatorio de validacao real da
 //      Safra (comparativo "Informado x Correto" do codigo de barras):
 //      Agencia = 1440 (o valor "0144" usado antes estava errado) e Conta =
-//      00587488-9. O campo "F" (uso livre) nas posicoes 20 e 44 do codigo
-//      de barras TAMBEM foi corrigido a partir desse relatorio: sao os
-//      digitos verificadores Modulo 10 da agencia e de
-//      (F20+agencia+conta+nosso numero) respectivamente - ver formula em
-//      GeraCodBarra2de5(). NAO sao mais "0" fixo.
+//      00587488-9. Os campos "Primeiro Fixo" e "Segundo Fixo" (posicoes 20
+//      e 44 do codigo de barras) sao campos FIXOS do layout Safra, nao
+//      digitos verificadores calculados - ver GeraCodBarra2de5(). NAO sao
+//      mais "0".
 //   2) O campo DM.ATCadEm2NOSSONUM3 (contador sequencial do nosso numero
 //      Safra, mesmo papel de NOSSONUM/NOSSONUM2 para BB/Itau) precisa ser
 //      criado em UnitDM/tabela SACADEM2 - esta unit nao cria/edita o data
@@ -734,20 +733,22 @@ begin
       // (Formatação do Código de Barras, pág. 22): F(1) + Agência(4) +
       // Conta(10) + Nosso Número(9) + F(1) = 25 dígitos. Diferente da
       // composição usada pelo Itaú (carteira+nosso número+DAC1+agência+
-      // conta+DAC2+"000"). As duas posições "F" (uso livre) NÃO são livres
-      // na prática: comparando o relatório "Desenvolvimento linha digitável e
-      // cód. barras" devolvido pela Safra (EDES_CELEST_408), a posição 20 é o
-      // dígito verificador Módulo 10 da Agência sozinha, e a posição 44 é o
-      // dígito verificador Módulo 10 do Nosso Número sozinho (NAO e' uma
-      // combinação de agência+conta+DAC1 como se tentou antes - essa formula
-      // antiga dava DAC2 errado). DAC1/DAC2 são reaproveitados aqui
-      // só como nomes de variável, sem relação com o DAC1/DAC2 do Itaú logo
-      // abaixo.
+      // conta+DAC2+"000"). As duas posições "F" sao o "Primeiro Fixo" (posicao
+      // 20) e o "Segundo Fixo" (posicao 44) do layout Safra - sao campos FIXOS
+      // (constantes), nao digitos verificadores calculados: o relatorio de
+      // validacao da Safra (EDES_CELEST_408, teste N4) confirmou que o Segundo
+      // Fixo deve vir sempre como "2", independente do nosso numero. Uma
+      // tentativa anterior de calcular esse campo via Modulo10 do nosso numero
+      // batia por coincidencia com o unico exemplo testado ate entao (nosso
+      // numero 422000002, cujo Modulo10 tambem da' 2), mas falhava com
+      // qualquer outro nosso numero. DAC1 (Primeiro Fixo) continua calculado
+      // via Modulo10 da Agencia porque, na pratica, a agencia desta empresa
+      // nunca muda - entao o resultado tambem e' sempre o mesmo valor fixo.
+      // DAC1/DAC2 sao reaproveitados aqui so como nomes de variavel, sem
+      // relacao com o DAC1/DAC2 do Itau logo abaixo.
       cNossoNumAux := DM.ATCadTitNOSSONUM.AsString;     // 9 dígitos livres (prefixo 422 + 6 sequenciais)
-      DAC1    := Modulo10(cAgSafra);                                       // posição 20
-      DAC2    := Modulo10(cNossoNumAux);    // posição 44 - Modulo10 do Nosso Numero sozinho (confirmado
-                                                          // pelo relatorio EDES_CELEST_408_07102026_N4: a formula
-                                                          // anterior, com agencia+conta+DAC1, dava DAC2 errado)
+      DAC1    := Modulo10(cAgSafra);     // posição 20 - "Primeiro Fixo"
+      DAC2    := '2';                    // posição 44 - "Segundo Fixo" (sempre "2", confirmado pela Safra)
       cDv     := CalcDigVerificador(cCodBanco+cMoeda+'0'+cFator+cValTit+DAC1+cAgSafra+cContaBarraSafra+cNossoNumAux+DAC2);
       cCodigo := cCodBanco+cMoeda+cDv+cFator+cValTit+DAC1+cAgSafra+cContaBarraSafra+cNossoNumAux+DAC2;
     end
