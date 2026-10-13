@@ -413,3 +413,45 @@ visualmente o resultado impresso — como foi reconstruído do zero, vale
 comparar lado a lado com um boleto real do Safra e, se a área do banco
 tiver a arte oficial da logo em alta resolução, trocar a logo
 reconstruída pela original.
+
+# Unitboleto — Impressão de Boletos em Lote (Delphi 7)
+
+`delphi/Boleto/Unitboleto.pas` é outra tela Delphi 7 da **SEDE DAS
+MIUDEZAS ATACADO LTDA** (mesma empresa do `UnitImBoletoMes`), mas para
+emissão **em lote**: cada título pode ter até 6 parcelas
+(`PRAZOLIM1`..`PRAZOLIM6`), cada uma virando um boleto próprio (2 vias),
+e o programa percorre todos os títulos filtrados de uma vez
+(`DM.ATCadPd1`), gerando um PDF consolidado. Já suportava BB (`001`) e
+Itaú (`341`); foi adicionado suporte ao Safra (`422`) seguindo
+exatamente os mesmos valores e fórmulas já validados em produção no
+`UnitImBoletoMes.pas`:
+
+- **Constantes do Safra**: mesmas de `UnitImBoletoMes.pas`
+  (`cAgSafra`, `cContaSafra`, `cContaDVSafra`, `cContaBarraSafra`,
+  `cPrefixoNNSafra`, `cAgSafraLabel`, `cCNPJEmpresa`).
+- **`FatorVencto()`**: mesmo fix da regra FEBRABAN pós-22/02/2025 (fator
+  reinicia em 1000), já aplicado aqui também — esse bug afetava BB e
+  Itaú neste arquivo também, não só o Safra.
+- **`GeraCodBarra2de5()`**: novo branch `cCodBanco = '422'` com `DAC1 :=
+  Modulo10(cAgSafra)` e `DAC2 := '2'` (constante — "Segundo Fixo"),
+  idêntico ao de `UnitImBoletoMes.pas`.
+- **`LinhaDigitavel()`**: novo branch `CODPOR = '422'`, mesma fórmula
+  posicional usada para o Itaú (bank-agnostic).
+- **Imagem do boleto**: `'C:\boleto 2v SAFRA.bmp'` (mesmo arquivo já
+  usado pelo `UnitImBoletoMes`, nenhuma imagem nova precisou ser criada
+  — o template não tem nada específico de empresa gravado nele).
+- **Nosso número do Safra**: novo contador `DM.ATCadEm2NOSSONUM3`
+  (mesmo papel de `NOSSONUM`/`NOSSONUM2` para BB/Itaú), 9 dígitos
+  (prefixo `"422"` + 6 sequenciais), gravado em
+  `DM.ATCadPd1NOSSONUM1`..`NOSSONUM6` conforme a parcela.
+- **Beneficiário/Agência/Carteira**: `"SEDE DAS MIUDEZAS ATACADO LTDA -
+  "+CNPJ`, `"14400 / 005874889"`, `"01"` — mesmos valores finais já
+  validados pela Safra em `UnitImBoletoMes.pas`.
+- **`BitBtn1Click`**: novo branch para gerar `c:\DATANET\BOL\SF<nota
+  fiscal>.PDF` quando `CODPOR = '422'` (mesmo padrão dos branches já
+  existentes para BB e Itaú).
+
+**Pendência**: assim como em `UnitImBoletoMes.pas`, o campo
+`DM.ATCadEm2NOSSONUM3` precisa existir em `UnitDM.pas`/tabela
+`SACADEM2` (não incluído neste repositório) — sem ele o projeto não
+compila.
