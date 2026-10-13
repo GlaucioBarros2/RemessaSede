@@ -35,7 +35,7 @@ type
     function CalcDigVerificador(CodigoBarras:string): char;
     function Modulo10(Valor: string): string;
 
-    function FatorVencto(dDataVenc:TDate):string;
+    function FatorVencto(dDataVenc:TDate; cCodBanco:string):string;
     function PadL(Oque: string; Tamanho: integer; ComOque: char): string;
     function DIGNOSSONUM(cNossoNum:String;cPeso:string):String;
     { Private declarations }
@@ -707,9 +707,9 @@ begin
   if nParcela = 1 then
     begin
       if DM.ATCadTitDTPRORROG.AsString <> '' then
-        cFator := FatorVencto(DM.ATCadTitDTPRORROG.AsVariant)
+        cFator := FatorVencto(DM.ATCadTitDTPRORROG.AsVariant, cCodBanco)
       else
-        cFator := FatorVencto(DM.ATCadTitDTVENCLIM.AsVariant);
+        cFator := FatorVencto(DM.ATCadTitDTVENCLIM.AsVariant, cCodBanco);
 
       if DM.ATCadTitVALPRORRO.AsFloat > 0 then
         aux := (DM.ATCadTitVALPRORRO.AsFloat+DM.ATCadCliVALTARBAN.AsFloat)*100
@@ -897,7 +897,7 @@ begin
     Result := chr(48 + Resto); // CHR(48) = '0', CHR(49) = '1', etc...
 end;
 
-function TFormBoletoMes.FatorVencto(dDataVenc: TDate): string;
+function TFormBoletoMes.FatorVencto(dDataVenc: TDate; cCodBanco: string): string;
 var
   FatVencto: LongInt;
 begin
@@ -909,7 +909,12 @@ begin
   // via relatorio de validacao real da Safra (EDES_CELEST_408): vencimento
   // 09/10/2026 -> fator correto = 1594 (nao 1059, que era o valor truncado
   // pela formula antiga + bug de PadL cortando para os 4 primeiros digitos).
-  if dDataVenc >= EncodeDate(2025, 2, 22) then
+  // Aplicada SO para o Safra (422): BB/Itau continuam na formula antiga a
+  // pedido do usuario, que ja usa esses bancos em producao sem rejeicao -
+  // nao ha evidencia de que o fator seja validado no recebimento do
+  // pagamento para esses dois bancos, entao nao vale o risco de mudar o
+  // que ja funciona.
+  if (cCodBanco = '422') and (dDataVenc >= EncodeDate(2025, 2, 22)) then
     FatVencto := 1000 + (Trunc(dDataVenc) - Trunc(EncodeDate(2025, 2, 22)))
   else
     FatVencto := Abs(Trunc(dDataVenc) - Trunc(EncodeDate(1997, 10, 7)));

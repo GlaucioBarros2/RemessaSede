@@ -333,9 +333,17 @@ partir desse relatório:
 - **Correção**: `FatorVencto()` agora usa `1000 + (dias desde
   22/02/2025)` quando a data de vencimento é `>= 22/02/2025` (o caso
   normal de uso), preservando a fórmula antiga só para datas anteriores
-  a essa (não deveria mais ocorrer na prática). Essa função é
-  compartilhada por BB/Itaú/Safra, então o bug afetava os 3 bancos, não
-  só o Safra.
+  a essa (não deveria mais ocorrer na prática).
+- **Restrito ao Safra**: essa função é compartilhada por BB/Itaú/Safra, e
+  o bug técnico afeta os 3 bancos — mas o usuário já usa BB/Itaú em
+  produção sem qualquer rejeição com a fórmula antiga (bancos
+  tipicamente não validam o fator contra a data real no recebimento do
+  pagamento; a data "oficial" vem do arquivo de remessa CNAB, não do
+  código de barras). Sem evidência equivalente de que BB/Itaú precisem
+  da correção, e por pedido explícito do usuário de não mexer no que já
+  funciona, `FatorVencto()` passou a receber `cCodBanco` como parâmetro
+  e só aplica a regra nova quando `cCodBanco = '422'` — BB e Itaú
+  continuam exatamente na fórmula antiga.
 - **`DAC1` já estava certo**: `DAC1 := Modulo10(cAgSafra)` (Módulo 10 da
   agência sozinha, 4 dígitos) batia com o relatório.
 

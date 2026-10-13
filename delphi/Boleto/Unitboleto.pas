@@ -34,7 +34,7 @@ type
     function LInhaDigitavel(cCodigoBarras:string):string;
     function CalcDigVerificador(CodigoBarras:string): char;
     function Modulo10(Valor: string): string;
-    function FatorVencto(dDataVenc:TDate):string;
+    function FatorVencto(dDataVenc:TDate; cCodBanco:string):string;
     function PadL(Oque: string; Tamanho: integer; ComOque: char): string;
     function DIGNOSSONUM(cNossoNum:String;cPeso:string):String;
     function TemFilaImpressao(const NomeImpressora: string): Boolean;
@@ -2522,9 +2522,9 @@ begin
     begin
       try
         StrToDate(DM.ATCadPd1DTSAIDA.AsString);
-        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM1.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM1.AsVariant, cCodBanco);   // Fator de vencimento
       Except
-        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM1.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM1.AsVariant, cCodBanco);   // Fator de vencimento
       end;
       aux         := (DM.ATCadPd1VALFATPZ1.AsFloat+DM.ATCadCliVALTARBAN.AsFloat)*100;
       cValTit     := Padl(floatToStr(aux), 10, '0');  // Valor do titulo (10 posicoes)
@@ -2533,9 +2533,9 @@ begin
     begin
       try
         StrToDate(DM.ATCadPd1DTSAIDA.AsString);
-        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM2.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM2.AsVariant, cCodBanco);   // Fator de vencimento
       Except
-        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM2.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM2.AsVariant, cCodBanco);   // Fator de vencimento
       end;
       aux         := (DM.ATCadPd1VALFATPZ2.AsFloat+DM.ATCadCliVALTARBAN.AsFloat)*100;
       cValTit     := Padl(floatToStr(aux), 10, '0');  // Valor do titulo (10 posicoes)
@@ -2544,9 +2544,9 @@ begin
     begin
       try
         StrToDate(DM.ATCadPd1DTSAIDA.AsString);
-        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM3.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM3.AsVariant, cCodBanco);   // Fator de vencimento
       Except
-        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM3.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM3.AsVariant, cCodBanco);   // Fator de vencimento
       end;
       aux         := (DM.ATCadPd1VALFATPZ3.AsFloat+DM.ATCadCliVALTARBAN.AsFloat)*100;
       cValTit     := Padl(floatToStr(aux), 10, '0');  // Valor do titulo (10 posicoes)
@@ -2555,9 +2555,9 @@ begin
     begin
       try
         StrToDate(DM.ATCadPd1DTSAIDA.AsString);
-        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM4.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM4.AsVariant, cCodBanco);   // Fator de vencimento
       Except
-        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM4.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM4.AsVariant, cCodBanco);   // Fator de vencimento
       end;
       aux         := (DM.ATCadPd1VALFATPZ4.AsFloat+DM.ATCadCliVALTARBAN.AsFloat)*100;
       cValTit     := Padl(floatToStr(aux), 10, '0');  // Valor do titulo (10 posicoes)
@@ -2566,9 +2566,9 @@ begin
     begin
       try
         StrToDate(DM.ATCadPd1DTSAIDA.AsString);
-        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM5.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM5.AsVariant, cCodBanco);   // Fator de vencimento
       Except
-        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM5.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM5.AsVariant, cCodBanco);   // Fator de vencimento
       end;
       aux         := (DM.ATCadPd1VALFATPZ5.AsFloat+DM.ATCadCliVALTARBAN.AsFloat)*100;
       cValTit     := Padl(floatToStr(aux), 10, '0');  // Valor do titulo (10 posicoes)
@@ -2577,9 +2577,9 @@ begin
     begin
       try
         StrToDate(DM.ATCadPd1DTSAIDA.AsString);
-        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM6.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTSAIDA.AsVariant+DM.ATCadPd1PRAZOLIM6.AsVariant, cCodBanco);   // Fator de vencimento
       Except
-        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM6.AsVariant);   // Fator de vencimento
+        cFator      := FatorVencto(DM.ATCadPd1DTEMIS.AsVariant+DM.ATCadPd1PRAZOLIM6.AsVariant, cCodBanco);   // Fator de vencimento
       end;
       aux         := (DM.ATCadPd1VALFATPZ6.AsFloat+DM.ATCadCliVALTARBAN.AsFloat)*100;
       cValTit     := Padl(floatToStr(aux), 10, '0');  // Valor do titulo (10 posicoes)
@@ -2752,7 +2752,7 @@ begin
     Result := chr(48 + Resto); // CHR(48) = '0', CHR(49) = '1', etc...
 end;
 
-function TFormBoleto.FatorVencto(dDataVenc: TDate): string;
+function TFormBoleto.FatorVencto(dDataVenc: TDate; cCodBanco: string): string;
 var
   FatVencto: LongInt;
 begin
@@ -2761,8 +2761,10 @@ begin
   // Regra FEBRABAN vigente desde 22/02/2025: o fator de vencimento antigo
   // (dias corridos desde 07/10/1997) estourava 9999 nessa data; a partir
   // dai o fator reinicia em 1000 e conta os dias desde entao (mesmo fix
-  // aplicado em UnitImBoletoMes.pas).
-  if dDataVenc >= EncodeDate(2025, 2, 22) then
+  // aplicado em UnitImBoletoMes.pas). Aplicada SO para o Safra (422): BB/
+  // Itau continuam na formula antiga a pedido do usuario, que ja usa
+  // esses bancos em producao sem rejeicao.
+  if (cCodBanco = '422') and (dDataVenc >= EncodeDate(2025, 2, 22)) then
     FatVencto := 1000 + (Trunc(dDataVenc) - Trunc(EncodeDate(2025, 2, 22)))
   else
     FatVencto := Abs(Trunc(dDataVenc) - Trunc(EncodeDate(1997, 10, 7)));
