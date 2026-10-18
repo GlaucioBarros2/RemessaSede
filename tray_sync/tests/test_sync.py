@@ -1,3 +1,4 @@
+"""Testes do fluxo completo, com uma Tray de mentira (FakeTray) e um DBF temporario."""
 import configparser
 from datetime import datetime, timedelta
 from decimal import Decimal as D
@@ -11,6 +12,7 @@ from tray_sync.tray import TrayClient
 from .helpers import CAMPOS_PRO, escreve_dbf
 
 
+# Resposta HTTP de mentira
 class Resp(object):
     def __init__(self, status=200, dados=None):
         self.status_code, self._d, self.text = status, dados or {}, str(dados)
@@ -47,6 +49,7 @@ class FakeTray(object):
         return Resp(200, {})
 
 
+# Cria Sincronizador + Tray falsa + DBF temporario. produtos = {id_tray: reference}
 def monta(tmp_path, registros, produtos, token='tok1', extra=None):
     dbf = str(tmp_path / 'sacadpro.dbf')
     escreve_dbf(dbf, CAMPOS_PRO, registros)
@@ -65,6 +68,7 @@ def monta(tmp_path, registros, produtos, token='tok1', extra=None):
     return Sincronizador(cfg, state, tray), fake, dbf
 
 
+# Casos: 1 igual / 2 saldo mudou / 3 preco mudou / 4 nao existe na Tray
 REG = [
     {'CODPRO': '000001', 'SALDESTOQ': 5, 'SAL_HASH': 5, 'PREVENDA': '10', 'PRE_HASH': '10'},   # igual
     {'CODPRO': '000002', 'SALDESTOQ': 3, 'SAL_HASH': 9, 'PREVENDA': '20', 'PRE_HASH': '20'},   # saldo
@@ -73,6 +77,7 @@ REG = [
 ]
 
 
+# So o que mudou e enviado; hash gravado no DBF; 2o ciclo nao reenvia
 def test_envia_so_o_que_mudou_e_grava_hash(tmp_path):
     sinc, fake, dbf = monta(tmp_path, REG, {10: '2', 11: '000003'})
     st = sinc.roda_uma_vez()
@@ -92,6 +97,7 @@ def test_envia_so_o_que_mudou_e_grava_hash(tmp_path):
     assert len(fake.puts) == n
 
 
+# Token invalido (401): renova sozinho e repete o envio
 def test_token_expirado_renova_e_repete(tmp_path):
     sinc, fake, dbf = monta(tmp_path, REG[1:2], {10: '000002'}, token='velho')
     st = sinc.roda_uma_vez()
@@ -99,6 +105,7 @@ def test_token_expirado_renova_e_repete(tmp_path):
     assert sinc.state.get('access_token') == 'tok2'
 
 
+# Erro da Tray: nao grava hash e entra em espera antes de tentar de novo
 def test_falha_nao_grava_hash_e_aguarda_retry(tmp_path):
     sinc, fake, dbf = monta(tmp_path, REG[1:2], {10: '000002'})
     sinc.tray.atualiza = lambda *a: (_ for _ in ()).throw(
@@ -109,6 +116,7 @@ def test_falha_nao_grava_hash_e_aguarda_retry(tmp_path):
     assert sinc.roda_uma_vez().falhas == 0   # em espera, nao martela a API
 
 
+# Atingiu a cota diaria: nao envia nada
 def test_limite_diario(tmp_path):
     sinc, fake, dbf = monta(tmp_path, REG[1:3], {10: '000002', 11: '000003'})
     sinc.tray.limite_diario = 0
@@ -116,6 +124,7 @@ def test_limite_diario(tmp_path):
     assert st.enviados == 0 and fake.puts == []
 
 
+# --dry-run: nao chama a Tray e nao altera o DBF
 def test_dry_run_nao_toca_em_nada(tmp_path):
     sinc, fake, dbf = monta(tmp_path, REG, {10: '000002'})
     antes = open(dbf, 'rb').read()

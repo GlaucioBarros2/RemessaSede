@@ -1,9 +1,12 @@
+"""Ferramentas dos testes: cria um DBF pequeno de mentira (sem depender de arquivo real)."""
 import struct
 from decimal import Decimal
 
 
 def escreve_dbf(path, campos, registros, deletados=()):
-    """campos: [(nome, tipo, tamanho, decimais)]; registros: lista de dicts."""
+    """Grava um DBF no formato dBase III.
+
+    campos: [(nome, tipo, tamanho, decimais)]; registros: lista de dicts."""
     rec_len = 1 + sum(c[2] for c in campos)
     head_len = 32 + 32 * len(campos) + 1
     out = bytearray(struct.pack('<BBBBIHH', 3, 126, 1, 1, len(registros), head_len, rec_len) + b'\0' * 20)
@@ -24,5 +27,6 @@ def escreve_dbf(path, campos, registros, deletados=()):
         f.write(out)
 
 
+# Subconjunto do SACADPRO.DBF suficiente para os testes (mesmos nomes dos campos reais)
 CAMPOS_PRO = [('CODPRO', 'C', 6, 0), ('DESCPRO', 'C', 20, 0), ('SALDESTOQ', 'N', 8, 0),
               ('SAL_HASH', 'N', 8, 0), ('PREVENDA', 'N', 10, 2), ('PRE_HASH', 'N', 10, 2)]

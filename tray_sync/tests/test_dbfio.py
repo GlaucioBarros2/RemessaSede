@@ -1,9 +1,11 @@
+"""Testes da leitura/escrita de DBF."""
 from decimal import Decimal
 
 from tray_sync.dbfio import DbfTable
 from .helpers import CAMPOS_PRO, escreve_dbf
 
 
+# Le valores corretamente, ignora registro deletado e preserva acentos
 def test_le_pula_deletados_e_acentos(tmp_path):
     p = str(tmp_path / 'sacadpro.dbf')
     escreve_dbf(p, CAMPOS_PRO, [
@@ -19,6 +21,7 @@ def test_le_pula_deletados_e_acentos(tmp_path):
     assert rows[0][1]['PRE_HASH'] is None
 
 
+# Gravar o hash so pode alterar os bytes de SAL_HASH/PRE_HASH do registro certo
 def test_escrita_no_lugar_nao_mexe_no_resto(tmp_path):
     p = str(tmp_path / 'a.dbf')
     escreve_dbf(p, CAMPOS_PRO, [{'CODPRO': '000001', 'SALDESTOQ': 5, 'PREVENDA': '10.5'},
