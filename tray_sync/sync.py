@@ -49,6 +49,7 @@ class Sincronizador(object):
         self.remap_s = s.getint('remap_minutos', fallback=60) * 60
         self.state, self.tray, self.stop_check, self.agora = state, tray, stop_check, agora
         self._avisados = set()
+        self._agr_cache = None
 
     # ---- DBF -------------------------------------------------------------
     def _tabela(self):
@@ -73,13 +74,20 @@ class Sincronizador(object):
         return tbl, mudou
 
     def carrega_agregados(self):
+        """{(CODPRO, UF): AGRESUBST} so da UF da loja; relido apenas se o arquivo mudou."""
         if not self.dbf_agr:
             return {}
+        st = os.stat(self.dbf_agr)
+        chave = (st.st_mtime, st.st_size)
+        if self._agr_cache and self._agr_cache[0] == chave:
+            return self._agr_cache[1]
         tbl = DbfTable(self.dbf_agr, self.encoding)
         tbl.require(['CODPRO', 'UF', 'AGRESUBST'])
         agr = {}
         for _, r in tbl.records(['CODPRO', 'UF', 'AGRESUBST']):
-            agr.setdefault((r['CODPRO'], r['UF']), r['AGRESUBST'] or Decimal(0))
+            if r['UF'] == self.uf:
+                agr.setdefault((r['CODPRO'], r['UF']), r['AGRESUBST'] or Decimal(0))
+        self._agr_cache = (chave, agr)
         return agr
 
     # ---- mapa codigo -> id Tray -----------------------------------------

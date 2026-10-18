@@ -45,11 +45,11 @@ Para parar o loop: crie o arquivo `parar_sync.txt` (como no script antigo). Test
    atualizava quem já tinha `codigo_tray`); ele fica pendente e aparece no log (`reference` = código
    com 6 dígitos). Se quiser *incluir* na Tray automaticamente, preciso saber os campos
    obrigatórios do seu cadastro (categoria, marca, etc.).
-2. **ICMS-ST (`AchaSubst`)**: no Delphi, só o slot `UFICMRT01/ICMSRET01` funcionava — nos slots
-   02..27 o código compara `ICMSRET0n` com `'PE'`, que nunca é verdadeiro. Mantive o
-   comportamento atual (`st_todos_slots = false`). Se a intenção era valer qualquer slot, ligue
-   `st_todos_slots = true` (**muda preços**). Preciso do nome do DBF de agregados (`ATCadAgr`,
-   campos `CODPRO`, `UF`, `AGRESUBST`) para `agregados =`; vazio = não soma ST.
+2. **ICMS-ST (`AchaSubst`)**: conferido com o seu `SACADPRO.DBF`/`SACADAGR.DBF`: o `PE` fica sempre no
+   slot 01 (`UFICMRT01`), que é o único que o Delphi realmente avaliava (nos slots 02..27 ele comparava
+   `ICMSRET0n` com `'PE'`, nunca verdadeiro). Por isso `st_todos_slots = false` (padrão) dá o resultado
+   correto. Configure `agregados = ...\SACADAGR.DBF`. O arquivo tem ~487 mil linhas; só as da UF da loja
+   são carregadas (≈2 s) e ficam em cache até o arquivo mudar.
 3. **Hash com menos casas que o campo origem**: a comparação é feita na precisão do campo `*_HASH`
    (o Delphi gravava o saldo truncado em inteiro; sem isso o produto seria reenviado para sempre).
 4. **Cota da Tray**: 180 req/min e 10 mil/dia. Há intervalo entre requisições e contador diário
