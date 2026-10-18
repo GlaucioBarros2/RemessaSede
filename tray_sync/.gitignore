@@ -1,0 +1,4 @@
+config.ini
+*.db
+*.log
+__pycache__/
