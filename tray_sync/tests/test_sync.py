@@ -143,7 +143,11 @@ def test_limite_envia_so_n(tmp_path):
 # --procura: mostra o que a Tray tem para o codigo (ex.: reference sem zeros a esquerda)
 def test_procura_mostra_produto(tmp_path, capsys):
     from tray_sync.sync import procura
-    sinc, fake, dbf = monta(tmp_path, REG[1:2], {10: '19189', 11: 'ABC'})
-    procura(sinc, '019189')
+    sinc, fake, dbf = monta(tmp_path, REG[1:2], {10: '19189', 11: 'ABC', 12: '', 13: '019189'})
+    csv_path = str(tmp_path / 'lista.csv')
+    procura(sinc, '019189', arq_csv=csv_path)
     saida = capsys.readouterr().out
     assert "reference='19189'" in saida and 'id=10' in saida
+    assert 'com reference vazia ...........: 1' in saida
+    assert 'references repetidas (ids diferentes com a mesma reference): 1' in saida   # 19189 e 019189
+    assert open(csv_path, encoding='utf-8-sig').read().count('\n') == 5            # cabecalho + 4

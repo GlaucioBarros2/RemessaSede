@@ -12,6 +12,7 @@ Uso:  python -m tray_sync --config config.ini [--once] [--dry-run] [--limite N] 
 """
 import argparse
 import configparser
+import csv
 import logging
 import logging.handlers
 import os
@@ -213,34 +214,81 @@ class Sincronizador(object):
         return self.state.retry_em(chave)
 
 
-def procura(sinc, codigo):
+def procura(sinc, codigo, arq_csv='tray_produtos.csv'):
     """Diagnostico (--procura CODIGO): mostra como um codigo aparece no mapa local e na Tray.
 
-    Varre TODOS os produtos da Tray (uma requisicao por 50 produtos) e lista os que
-    tem o numero dentro da 'reference'. Serve para descobrir por que um produto
-    'nao existe na Tray': formato diferente da referencia, produto fora da listagem etc.
+    Varre TODOS os produtos da Tray (uma requisicao por 50 produtos) e:
+      - lista os que tem o numero dentro da 'reference';
+      - lista os que tem o mesmo NOME do produto no DBF (acha o produto mesmo que a
+        reference esteja vazia ou diferente);
+      - mostra estatisticas (referencias vazias, repetidas);
+      - grava tudo em 'tray_produtos.csv' (abra no Excel e use Ctrl+L para pesquisar).
     """
     chave = referencia(codigo)
     alvo = chave.lstrip('0')  # so os digitos significativos (019189 -> 19189)
+
+    # descricao do produto no DBF (para procurar tambem pelo nome na Tray)
+    descricao = ''
+    try:
+        for _, r in sinc._tabela().records(['CODPRO', 'DESCPRO']):
+            if referencia(r['CODPRO']) == chave:
+                descricao = r['DESCPRO']
+                break
+    except (KeyError, OSError):
+        pass
+    trecho = descricao.upper()[:25]  # inicio do nome, suficiente para identificar
+
     print('codigo informado ........: %s' % codigo)
     print('codigo normalizado ......: %s' % chave)
+    print('descricao no DBF ........: %s' % (descricao or '(nao achei no DBF)'))
     print('id no mapa local ........: %s' % sinc.state.tray_id(chave))
     print('produtos no mapa local ..: %d' % sinc.state.map_size())
     print('varrendo a Tray (pode levar alguns minutos)...')
-    total, achados, amostra = 0, [], []
-    for ref, tray_id, nome in sinc.tray.lista_produtos():
-        total += 1
-        if len(amostra) < 8:
-            amostra.append(ref)
-        if alvo and alvo in ref:
-            achados.append((ref, tray_id, nome))
-    print('produtos devolvidos pela Tray: %d' % total)
-    print('exemplos de reference (entre aspas, para ver espacos/letras): %s' % ', '.join(repr(a) for a in amostra))
-    if not achados:
-        print('NENHUM produto da Tray tem "%s" na reference.' % alvo)
-        print('-> o produto nao vem na listagem da API (confira se esta ativo/visivel na loja).')
-    for ref, tray_id, nome in achados[:20]:
+
+    total, vazias = 0, 0
+    ids = set()
+    por_ref = {}          # referencia normalizada -> ids que a usam
+    por_ref_achados, por_nome = [], []
+    amostra = []
+    with open(arq_csv, 'w', newline='', encoding='utf-8-sig') as f:
+        csv_out = csv.writer(f, delimiter=';')
+        csv_out.writerow(['id', 'reference', 'nome'])
+        for ref, tray_id, nome in sinc.tray.lista_produtos():
+            total += 1
+            ids.add(tray_id)
+            csv_out.writerow([tray_id, ref, nome])
+            if len(amostra) < 8 and ref:
+                amostra.append(ref)
+            if ref.strip():
+                por_ref.setdefault(referencia(ref), set()).add(tray_id)
+            else:
+                vazias += 1
+            if alvo and alvo in ref:
+                por_ref_achados.append((ref, tray_id, nome))
+            if trecho and trecho in nome.upper():
+                por_nome.append((ref, tray_id, nome))
+
+    repetidas = [(k, v) for k, v in por_ref.items() if len(v) > 1]
+    print('produtos devolvidos pela Tray .: %d (ids diferentes: %d)' % (total, len(ids)))
+    print('com reference vazia ...........: %d' % vazias)
+    print('references repetidas (ids diferentes com a mesma reference): %d' % len(repetidas))
+    for k, v in repetidas[:5]:
+        print('   exemplo: reference %s usada pelos ids %s' % (k, ', '.join(sorted(v))))
+    print('exemplos de reference (entre aspas): %s' % ', '.join(repr(a) for a in amostra))
+
+    print('--- procurando pela reference "%s" ---' % alvo)
+    if not por_ref_achados:
+        print('nenhum produto da Tray tem "%s" na reference.' % alvo)
+    for ref, tray_id, nome in por_ref_achados[:20]:
         print('encontrado: reference=%r  id=%s  nome=%s' % (ref, tray_id, nome))
+
+    if trecho:
+        print('--- procurando pelo nome "%s..." ---' % trecho)
+        if not por_nome:
+            print('nenhum produto da Tray tem esse nome (o produto nao vem na listagem da API).')
+        for ref, tray_id, nome in por_nome[:20]:
+            print('mesmo nome: reference=%r  id=%s  nome=%s' % (ref, tray_id, nome))
+    print('lista completa gravada em: %s' % arq_csv)
 
 
 def monta(cfg, stop_check):

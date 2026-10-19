@@ -2,3 +2,4 @@ config.ini
 *.db
 *.log
 __pycache__/
+tray_produtos.csv
