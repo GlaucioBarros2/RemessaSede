@@ -130,3 +130,11 @@ def test_dry_run_nao_toca_em_nada(tmp_path):
     antes = open(dbf, 'rb').read()
     sinc.roda_uma_vez(dry_run=True)
     assert fake.chamadas == [] and open(dbf, 'rb').read() == antes
+
+
+# --limite: envia so N produtos; os demais continuam pendentes para o proximo ciclo
+def test_limite_envia_so_n(tmp_path):
+    sinc, fake, dbf = monta(tmp_path, REG[1:3], {10: '000002', 11: '000003'})
+    st = sinc.roda_uma_vez(limite=1)
+    assert st.enviados == 1 and len(fake.puts) == 1
+    assert sinc.roda_uma_vez().enviados == 1   # o outro vai no ciclo seguinte

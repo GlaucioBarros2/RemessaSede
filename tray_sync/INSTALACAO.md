@@ -74,9 +74,10 @@ Cria o `tray_sync.db` (de/para código → id da Tray). Aparece no log:
 Se possível, antes de liberar geral, faça o teste com um produto só (ex.: altere o preço de
 um produto no sistema) e rode:
 ```
-python -m tray_sync --once
+python -m tray_sync --once --limite 3
 ```
-Confira o produto na loja Tray e veja se `SAL_HASH`/`PRE_HASH` foram gravados no DBF.
+(`--limite 3` envia no máximo 3 produtos; os demais ficam para depois.)
+Confira os produtos na loja Tray e veja se `SAL_HASH`/`PRE_HASH` foram gravados no DBF.
 **Atenção:** na 1ª execução real, todos os produtos com hash em branco serão enviados
 (pode passar de 10 mil requisições — o programa para no limite diário e continua no dia seguinte).
 Considere avisar antes ou começar à tarde.

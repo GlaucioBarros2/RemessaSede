@@ -8,7 +8,7 @@ Fluxo de cada ciclo (a cada 'intervalo_segundos'):
   3. Se a Tray aceitou, grava o valor enviado em SAL_HASH/PRE_HASH no DBF;
      assim o produto so volta a ser enviado quando mudar de novo.
 
-Uso:  python -m tray_sync --config config.ini [--once] [--dry-run] [--remap]
+Uso:  python -m tray_sync --config config.ini [--once] [--dry-run] [--limite N] [--remap]
 """
 import argparse
 import configparser
@@ -136,8 +136,12 @@ class Sincronizador(object):
         return ult is None or self.agora() - float(ult) >= self.remap_s
 
     # ---- ciclo -----------------------------------------------------------
-    def roda_uma_vez(self, dry_run=False):
-        """Executa um ciclo completo. dry_run=True so mostra o que faria (nao chama a Tray nem grava o DBF)."""
+    def roda_uma_vez(self, dry_run=False, limite=None):
+        """Executa um ciclo completo. dry_run=True so mostra o que faria (nao chama a Tray nem grava o DBF).
+
+        limite = maximo de produtos a enviar neste ciclo (None = sem limite). Serve para
+        testar o primeiro envio com poucos produtos.
+        """
         tbl, mudou = self.acha_alteracoes()
         if not mudou:
             return Stats(0, 0, 0, 0)
@@ -151,6 +155,9 @@ class Sincronizador(object):
                 self.atualiza_mapa()
             for c in mudou:
                 if self.stop_check():
+                    break
+                # atingiu o limite pedido (--limite): para por aqui
+                if limite is not None and enviados + falhas >= limite:
                     break
                 chave = referencia(c.codpro)  # codigo com 6 digitos, igual ao 'reference' da Tray
                 # preco = (PREVENDA + ICMS-ST) + acrescimo%
@@ -241,6 +248,7 @@ def main(argv=None):
     ap.add_argument('--config', default='config.ini')
     ap.add_argument('--once', action='store_true', help='roda um ciclo e sai')
     ap.add_argument('--dry-run', action='store_true', help='so mostra o que enviaria (nao chama a Tray nem grava o DBF)')
+    ap.add_argument('--limite', type=int, default=None, help='envia no maximo N produtos por ciclo (util para testar)')
     ap.add_argument('--remap', action='store_true', help='baixa de novo o mapa codigo->id da Tray e sai')
     a = ap.parse_args(argv)
 
@@ -264,7 +272,7 @@ def main(argv=None):
     log.info('tray_sync iniciado')
     while True:
         try:
-            st = sinc.roda_uma_vez(dry_run=a.dry_run)
+            st = sinc.roda_uma_vez(dry_run=a.dry_run, limite=a.limite)
             if st.alterados:
                 log.info('alterados=%d enviados=%d sem_tray=%d falhas=%d', *st)
         except Exception:
