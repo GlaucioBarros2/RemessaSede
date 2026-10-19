@@ -8,7 +8,7 @@ Fluxo de cada ciclo (a cada 'intervalo_segundos'):
   3. Se a Tray aceitou, grava o valor enviado em SAL_HASH/PRE_HASH no DBF;
      assim o produto so volta a ser enviado quando mudar de novo.
 
-Uso:  python -m tray_sync --config config.ini [--once] [--dry-run] [--limite N] [--remap] [--procura CODIGO] [--produto ID]
+Uso:  python -m tray_sync --config config.ini [--once] [--dry-run] [--limite N] [--remap] [--procura CODIGO] [--produto ID] [--info]
 """
 import argparse
 import configparser
@@ -214,6 +214,23 @@ class Sincronizador(object):
         return self.state.retry_em(chave)
 
 
+def mostra_info(sinc):
+    """Diagnostico (--info): mostra QUAL loja a API esta acessando (nao mostra tokens).
+
+    Renova o token (isso traz store_id e api_host) e pergunta o total de produtos.
+    Compare com a loja do painel: se o total ou o endereco forem diferentes, o 'code'
+    esta autorizando outra loja.
+    """
+    sinc.tray.renovar()
+    total, primeiro = sinc.tray.resumo_loja()
+    print('api_base (config.ini) .....: %s' % sinc.tray.api)
+    print('api_host (devolvido Tray) .: %s' % sinc.state.get('api_host'))
+    print('store_id ..................: %s' % sinc.state.get('store_id'))
+    print('token do produto valido ate: %s' % sinc.state.get('date_expiration_access_token'))
+    print('total de produtos (API) ...: %s' % total)
+    print('um produto de exemplo .....: %s' % primeiro)
+
+
 def mostra_produto(sinc, tray_id):
     """Diagnostico (--produto ID): mostra o que a API da Tray devolve para UM produto.
 
@@ -344,6 +361,7 @@ def main(argv=None):
     ap.add_argument('--once', action='store_true', help='roda um ciclo e sai')
     ap.add_argument('--dry-run', action='store_true', help='so mostra o que enviaria (nao chama a Tray nem grava o DBF)')
     ap.add_argument('--limite', type=int, default=None, help='envia no maximo N produtos por ciclo (util para testar)')
+    ap.add_argument('--info', action='store_true', help='diagnostico: mostra qual loja a API esta acessando')
     ap.add_argument('--produto', metavar='ID', help='diagnostico: mostra o que a API devolve para 1 produto (id da Tray)')
     ap.add_argument('--procura', metavar='CODIGO', help='diagnostico: procura o codigo na Tray e no mapa local')
     ap.add_argument('--remap', action='store_true', help='baixa de novo o mapa codigo->id da Tray e sai')
@@ -362,6 +380,9 @@ def main(argv=None):
         return False
 
     sinc = monta(cfg, parar)
+    if a.info:  # diagnostico da loja autorizada e sai
+        mostra_info(sinc)
+        return 0
     if a.produto:  # diagnostico de um produto pelo id da Tray e sai
         mostra_produto(sinc, a.produto)
         return 0

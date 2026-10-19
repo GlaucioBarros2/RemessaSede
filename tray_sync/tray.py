@@ -66,10 +66,11 @@ class TrayClient(object):
         """Guarda os tokens recebidos da Tray no SQLite."""
         if not d.get('access_token'):
             raise TrayAuthError('resposta de autenticacao sem access_token: %s' % _scrub(d.get('message', d)))
+        # store_id e api_host dizem QUAL loja esta autorizada (so para diagnostico)
         for k in ('access_token', 'refresh_token', 'date_expiration_access_token',
-                  'date_expiration_refresh_token'):
+                  'date_expiration_refresh_token', 'store_id', 'api_host'):
             if d.get(k):
-                self.state.set(k, d[k])
+                self.state.set(k, str(d[k]))
 
     def _expirado(self, chave):
         """True se a data de validade guardada em 'chave' ja venceu (ou esta perto)."""
@@ -169,6 +170,13 @@ class TrayClient(object):
             if len(itens) < POR_PAGINA:  # pagina incompleta = ultima
                 return
             pagina += 1
+
+    def resumo_loja(self):
+        """(total de produtos, nome do 1o produto) segundo a API; 1 requisicao (diagnostico)."""
+        dados = self._request('GET', '/products', params={'page': 1, 'limit': 1}).json()
+        itens = dados.get('Products') or []
+        nome = itens[0]['Product'].get('name') if itens else None
+        return (dados.get('paging') or {}).get('total'), nome
 
     def produto(self, tray_id):
         """Devolve o JSON completo de UM produto (GET /products/{id}); usado no diagnostico."""

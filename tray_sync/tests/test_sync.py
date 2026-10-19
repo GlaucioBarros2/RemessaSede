@@ -163,3 +163,13 @@ def test_mostra_produto(tmp_path, capsys):
     mostra_produto(sinc, '10')
     saida = capsys.readouterr().out
     assert "reference" in saida and "'19189'" in saida and '019189' in saida
+
+
+# --info: mostra a loja autorizada (store_id/api_host) e o total de produtos, sem expor tokens
+def test_mostra_info(tmp_path, capsys):
+    from tray_sync.sync import mostra_info
+    sinc, fake, dbf = monta(tmp_path, REG[1:2], {10: '19189'})
+    mostra_info(sinc)
+    saida = capsys.readouterr().out
+    assert 'store_id' in saida and 'total de produtos' in saida
+    assert 'tok2' not in saida and 'r2' not in saida
