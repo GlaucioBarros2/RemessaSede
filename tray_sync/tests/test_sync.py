@@ -185,3 +185,23 @@ def test_reautenticar_limpa_e_autentica(tmp_path, capsys):
     mostra_info(sinc)                       # sem refresh_token -> autentica com o code (POST /auth)
     assert sinc.state.get('access_token') == 'tok2'
     assert ('POST', 'https://x/web_api/auth') in fake.chamadas
+
+
+# Renovacao proativa: access_token vence em 10 min -> renova sozinho, mesmo sem produtos a enviar
+def test_manter_token_renova_antes_de_vencer(tmp_path):
+    sinc, fake, dbf = monta(tmp_path, REG[:1], {10: '000001'})   # REG[0]: nada a enviar
+    quase = (datetime.now() + timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S')
+    sinc.state.set('date_expiration_access_token', quase)
+    sinc.roda_uma_vez()
+    assert ('GET', 'https://x/web_api/auth') in fake.chamadas      # renovou pelo refresh_token
+    assert sinc.state.get('access_token') == 'tok2'
+    assert sinc.state.get('refresh_token') == 'r2'                 # guardou o refresh_token novo
+
+
+# Avisa no log quando o refresh_token (30 dias) esta perto de vencer
+def test_avisa_refresh_perto_de_vencer(tmp_path, caplog):
+    sinc, fake, dbf = monta(tmp_path, REG[:1], {10: '000001'})
+    logo = (datetime.now() + timedelta(days=2)).strftime('%Y-%m-%d %H:%M:%S')
+    sinc.state.set('date_expiration_refresh_token', logo)
+    sinc.tray.manter_token()
+    assert 'refresh_token' in caplog.text and '--reautenticar' in caplog.text

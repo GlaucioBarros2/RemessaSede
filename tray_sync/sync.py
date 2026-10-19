@@ -143,6 +143,8 @@ class Sincronizador(object):
         limite = maximo de produtos a enviar neste ciclo (None = sem limite). Serve para
         testar o primeiro envio com poucos produtos.
         """
+        if not dry_run:
+            self.tray.manter_token()  # renova o token se estiver perto de vencer (mesmo sem nada a enviar)
         tbl, mudou = self.acha_alteracoes()
         if not mudou:
             return Stats(0, 0, 0, 0)

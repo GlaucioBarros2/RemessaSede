@@ -6,6 +6,7 @@ Cuida de:
   - limites da Tray: 180 requisicoes/minuto e 10 mil/dia;
   - listar produtos (para saber o id da Tray de cada codigo) e atualizar preco/estoque.
 """
+import logging
 import re
 import time
 from datetime import datetime, timedelta
@@ -13,8 +14,12 @@ from datetime import datetime, timedelta
 import requests
 
 DATA_FMT = '%Y-%m-%d %H:%M:%S'          # formato das datas de validade que a Tray devolve
-MARGEM_TOKEN = timedelta(minutes=5)      # renova o token um pouco antes de vencer
+MARGEM_TOKEN = timedelta(minutes=5)      # renova o token um pouco antes de vencer (ao enviar)
+MARGEM_RENOVACAO = timedelta(minutes=30)  # renovacao proativa: access_token vale 3h, renova com 30 min de folga
+AVISO_REFRESH = timedelta(days=5)         # avisa no log se o refresh_token (30 dias) vence em menos de 5 dias
 POR_PAGINA = 50                          # maximo de produtos por pagina na Tray
+
+log = logging.getLogger('tray_sync')
 
 
 class TrayError(Exception):
@@ -72,13 +77,13 @@ class TrayClient(object):
             if d.get(k):
                 self.state.set(k, str(d[k]))
 
-    def _expirado(self, chave):
-        """True se a data de validade guardada em 'chave' ja venceu (ou esta perto)."""
+    def _expirado(self, chave, margem=MARGEM_TOKEN):
+        """True se a data de validade guardada em 'chave' ja venceu (ou vence em menos de 'margem')."""
         val = self.state.get(chave)
         if not val:
             return True
         try:
-            return datetime.strptime(val, DATA_FMT) - self.agora() < MARGEM_TOKEN
+            return datetime.strptime(val, DATA_FMT) - self.agora() < margem
         except ValueError:
             return True
 
@@ -109,6 +114,22 @@ class TrayClient(object):
         self._auth_call('POST', json={'consumer_key': self.consumer_key,
                                       'consumer_secret': self.consumer_secret,
                                       'code': self.code})
+
+    def manter_token(self):
+        """Mantem os tokens em dia mesmo sem enviar nada (chamado a cada ciclo).
+
+        A Tray recomenda automatizar isso: o access_token vale 3 horas e, a cada renovacao,
+        vem tambem um refresh_token novo (valido por 30 dias). Se o programa ficasse dias sem
+        renovar (nenhum produto mudou), o refresh_token venceria sem ninguem perceber.
+        """
+        if (not self.state.get('access_token')
+                or self._expirado('date_expiration_access_token', MARGEM_RENOVACAO)):
+            self.renovar()
+        # se mesmo apos renovar o refresh_token vence logo, o usuario precisa gerar um code novo
+        if self._expirado('date_expiration_refresh_token', AVISO_REFRESH):
+            log.warning('o refresh_token da Tray vence em %s; se a renovacao automatica falhar, '
+                        'gere um code novo e rode: python -m tray_sync --reautenticar',
+                        self.state.get('date_expiration_refresh_token'))
 
     def _garante_token(self):
         """Antes de cada requisicao: se nao ha token ou ele vai vencer, renova."""

@@ -39,6 +39,15 @@ python -m tray_sync --remap                        # recarrega o mapa código �
 
 Para parar o loop: crie o arquivo `parar_sync.txt` (como no script antigo). Testes: `python -m pytest tray_sync`.
 
+## Tokens da Tray (como funciona)
+
+- `access_token` vale **3 horas**; o programa renova sozinho (30 min antes de vencer, a cada ciclo,
+  mesmo sem nada para enviar) usando o `refresh_token`. Se a Tray responder 401, renova e repete.
+- Toda renovação devolve um `refresh_token` novo (válido **30 dias**), e o programa guarda sempre o mais
+  recente no `tray_sync.db`. Rodando todo dia, ele nunca vence.
+- Se o programa ficar **mais de 30 dias parado**, o `refresh_token` vence: gere um `code` novo no painel,
+  coloque no `config.ini` e rode `python -m tray_sync --reautenticar`. O log avisa quando faltarem menos de 5 dias.
+
 ## Pontos para você decidir / conferir
 
 1. **Produto que não existe na Tray não é criado.** O fluxo antigo também não criava (só
