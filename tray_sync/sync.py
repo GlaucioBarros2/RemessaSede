@@ -8,7 +8,7 @@ Fluxo de cada ciclo (a cada 'intervalo_segundos'):
   3. Se a Tray aceitou, grava o valor enviado em SAL_HASH/PRE_HASH no DBF;
      assim o produto so volta a ser enviado quando mudar de novo.
 
-Uso:  python -m tray_sync --config config.ini [--once] [--dry-run] [--limite N] [--remap] [--procura CODIGO] [--produto ID] [--info]
+Uso:  python -m tray_sync --config config.ini [--once] [--dry-run] [--limite N] [--remap] [--procura CODIGO] [--produto ID] [--info] [--reautenticar]
 """
 import argparse
 import configparser
@@ -361,6 +361,7 @@ def main(argv=None):
     ap.add_argument('--once', action='store_true', help='roda um ciclo e sai')
     ap.add_argument('--dry-run', action='store_true', help='so mostra o que enviaria (nao chama a Tray nem grava o DBF)')
     ap.add_argument('--limite', type=int, default=None, help='envia no maximo N produtos por ciclo (util para testar)')
+    ap.add_argument('--reautenticar', action='store_true', help='apaga tokens/mapa antigos e autentica de novo com o code do config.ini (use ao trocar o code/loja)')
     ap.add_argument('--info', action='store_true', help='diagnostico: mostra qual loja a API esta acessando')
     ap.add_argument('--produto', metavar='ID', help='diagnostico: mostra o que a API devolve para 1 produto (id da Tray)')
     ap.add_argument('--procura', metavar='CODIGO', help='diagnostico: procura o codigo na Tray e no mapa local')
@@ -380,6 +381,11 @@ def main(argv=None):
         return False
 
     sinc = monta(cfg, parar)
+    if a.reautenticar:  # trocou o code/loja: esquece a autorizacao antiga, autentica e mostra a loja
+        sinc.state.reset_autorizacao()
+        log.info('autorizacao antiga apagada; autenticando com o code do config.ini')
+        mostra_info(sinc)
+        return 0
     if a.info:  # diagnostico da loja autorizada e sai
         mostra_info(sinc)
         return 0

@@ -35,6 +35,16 @@ class State(object):
         self.db.execute('insert or replace into kv values (?,?)', (k, v))
         self.db.commit()
 
+    def reset_autorizacao(self):
+        """Apaga tokens, mapa de produtos e falhas (usar ao trocar de loja/code).
+
+        Mantem a contagem de requisicoes do dia (cota da Tray).
+        """
+        with self.db:
+            self.db.execute('delete from kv')        # tokens, store_id, data do ultimo mapa
+            self.db.execute('delete from tray_map')  # mapa codigo -> id (era da loja antiga)
+            self.db.execute('delete from falha')
+
     # ---- mapa codigo -> id da Tray ----
     def replace_map(self, pares):
         """Troca o mapa inteiro de uma vez (pares = [(codpro, tray_id), ...])."""

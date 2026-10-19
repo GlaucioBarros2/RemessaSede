@@ -96,6 +96,8 @@ Considere avisar antes ou começar à tarde.
 - Produto "não existe na Tray" mas você vê ele no painel: rode `python -m tray_sync --procura 019189`
   (troque pelo código). Ele varre a Tray, mostra como a `reference` aparece de verdade, procura também pelo nome do
   produto e grava a lista inteira em `tray_produtos.csv` (abra no Excel).
+- Trocou o `code` no config.ini (ou a loja)? Rode `python -m tray_sync --reautenticar`. Só trocar o
+  texto no config.ini não basta: os tokens antigos ficam guardados no `tray_sync.db`.
 - Ver QUAL loja a API está acessando (confira se é a mesma do painel): `python -m tray_sync --info`.
 - Ver o que a API devolve para 1 produto (1 requisição só): `python -m tray_sync --produto 14785`
   (use o "Código" que aparece no painel da Tray).

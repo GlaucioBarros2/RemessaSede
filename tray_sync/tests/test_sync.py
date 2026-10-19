@@ -173,3 +173,16 @@ def test_mostra_info(tmp_path, capsys):
     saida = capsys.readouterr().out
     assert 'store_id' in saida and 'total de produtos' in saida
     assert 'tok2' not in saida and 'r2' not in saida
+
+
+# --reautenticar: apaga tokens/mapa da loja antiga e autentica de novo com o code
+def test_reautenticar_limpa_e_autentica(tmp_path, capsys):
+    from tray_sync.sync import main, monta
+    sinc, fake, dbf = monta(tmp_path, REG[1:2], {10: '19189'})
+    sinc.state.replace_map([('019189', '10')])
+    sinc.state.reset_autorizacao()
+    assert sinc.state.map_size() == 0 and sinc.state.get('access_token') is None
+    from tray_sync.sync import mostra_info
+    mostra_info(sinc)                       # sem refresh_token -> autentica com o code (POST /auth)
+    assert sinc.state.get('access_token') == 'tok2'
+    assert ('POST', 'https://x/web_api/auth') in fake.chamadas
