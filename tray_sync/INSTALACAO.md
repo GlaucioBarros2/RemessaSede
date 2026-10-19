@@ -93,6 +93,8 @@ Considere avisar antes ou começar à tarde.
 
 ## Onde olhar se algo der errado
 - `tray_sync.log` (na pasta onde você rodou): histórico de tudo que foi enviado e dos erros.
+- Produto "não existe na Tray" mas você vê ele no painel: rode `python -m tray_sync --procura 019189`
+  (troque pelo código). Ele varre a Tray e mostra como a `reference` aparece de verdade.
 - Produto "não existe na Tray": cadastre-o na Tray com `reference` = código de 6 dígitos.
 - Erro de token: confira `consumer_key`, `consumer_secret` e `code` no `config.ini`.
 - Rode **uma instância só** do programa e **desligue o Delphi e os scripts antigos**.

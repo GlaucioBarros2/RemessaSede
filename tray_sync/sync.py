@@ -8,7 +8,7 @@ Fluxo de cada ciclo (a cada 'intervalo_segundos'):
   3. Se a Tray aceitou, grava o valor enviado em SAL_HASH/PRE_HASH no DBF;
      assim o produto so volta a ser enviado quando mudar de novo.
 
-Uso:  python -m tray_sync --config config.ini [--once] [--dry-run] [--limite N] [--remap]
+Uso:  python -m tray_sync --config config.ini [--once] [--dry-run] [--limite N] [--remap] [--procura CODIGO]
 """
 import argparse
 import configparser
@@ -213,6 +213,36 @@ class Sincronizador(object):
         return self.state.retry_em(chave)
 
 
+def procura(sinc, codigo):
+    """Diagnostico (--procura CODIGO): mostra como um codigo aparece no mapa local e na Tray.
+
+    Varre TODOS os produtos da Tray (uma requisicao por 50 produtos) e lista os que
+    tem o numero dentro da 'reference'. Serve para descobrir por que um produto
+    'nao existe na Tray': formato diferente da referencia, produto fora da listagem etc.
+    """
+    chave = referencia(codigo)
+    alvo = chave.lstrip('0')  # so os digitos significativos (019189 -> 19189)
+    print('codigo informado ........: %s' % codigo)
+    print('codigo normalizado ......: %s' % chave)
+    print('id no mapa local ........: %s' % sinc.state.tray_id(chave))
+    print('produtos no mapa local ..: %d' % sinc.state.map_size())
+    print('varrendo a Tray (pode levar alguns minutos)...')
+    total, achados, amostra = 0, [], []
+    for ref, tray_id, nome in sinc.tray.lista_produtos():
+        total += 1
+        if len(amostra) < 8:
+            amostra.append(ref)
+        if alvo and alvo in ref:
+            achados.append((ref, tray_id, nome))
+    print('produtos devolvidos pela Tray: %d' % total)
+    print('exemplos de reference (entre aspas, para ver espacos/letras): %s' % ', '.join(repr(a) for a in amostra))
+    if not achados:
+        print('NENHUM produto da Tray tem "%s" na reference.' % alvo)
+        print('-> o produto nao vem na listagem da API (confira se esta ativo/visivel na loja).')
+    for ref, tray_id, nome in achados[:20]:
+        print('encontrado: reference=%r  id=%s  nome=%s' % (ref, tray_id, nome))
+
+
 def monta(cfg, stop_check):
     """Cria Estado + Cliente Tray + Sincronizador a partir do config.ini."""
     s, t = cfg['sync'], cfg['tray']
@@ -249,6 +279,7 @@ def main(argv=None):
     ap.add_argument('--once', action='store_true', help='roda um ciclo e sai')
     ap.add_argument('--dry-run', action='store_true', help='so mostra o que enviaria (nao chama a Tray nem grava o DBF)')
     ap.add_argument('--limite', type=int, default=None, help='envia no maximo N produtos por ciclo (util para testar)')
+    ap.add_argument('--procura', metavar='CODIGO', help='diagnostico: procura o codigo na Tray e no mapa local')
     ap.add_argument('--remap', action='store_true', help='baixa de novo o mapa codigo->id da Tray e sai')
     a = ap.parse_args(argv)
 
@@ -265,6 +296,9 @@ def main(argv=None):
         return False
 
     sinc = monta(cfg, parar)
+    if a.procura:  # diagnostico de um codigo e sai
+        procura(sinc, a.procura)
+        return 0
     if a.remap:  # so recarrega o mapa codigo -> id e sai
         sinc.atualiza_mapa()
         return 0

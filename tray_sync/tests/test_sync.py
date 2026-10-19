@@ -138,3 +138,12 @@ def test_limite_envia_so_n(tmp_path):
     st = sinc.roda_uma_vez(limite=1)
     assert st.enviados == 1 and len(fake.puts) == 1
     assert sinc.roda_uma_vez().enviados == 1   # o outro vai no ciclo seguinte
+
+
+# --procura: mostra o que a Tray tem para o codigo (ex.: reference sem zeros a esquerda)
+def test_procura_mostra_produto(tmp_path, capsys):
+    from tray_sync.sync import procura
+    sinc, fake, dbf = monta(tmp_path, REG[1:2], {10: '19189', 11: 'ABC'})
+    procura(sinc, '019189')
+    saida = capsys.readouterr().out
+    assert "reference='19189'" in saida and 'id=10' in saida
