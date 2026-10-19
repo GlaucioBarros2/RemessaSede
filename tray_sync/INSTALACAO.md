@@ -30,6 +30,12 @@ cd C:\RemessaSede
 python -m pip install -r tray_sync\requirements.txt
 ```
 
+Se aparecer o erro `urllib3 v2.0 only supports OpenSSL 1.1.1+` ao rodar o programa
+(acontece no Python 3.7), corrija com:
+```
+python -m pip install "urllib3<2" "requests<2.32"
+```
+
 ## 4. Criar o config.ini
 ```
 copy tray_sync\config.example.ini config.ini

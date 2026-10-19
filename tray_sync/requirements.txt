@@ -1,1 +1,4 @@
-requests>=2.25
+# requests e urllib3 travados em versoes que funcionam no Python 3.7 do Windows
+# (o urllib3 2.x exige OpenSSL 1.1.1+, e o Python 3.7 vem com OpenSSL 1.1.0).
+requests>=2.25,<2.32
+urllib3<2
