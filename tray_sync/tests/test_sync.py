@@ -177,7 +177,6 @@ def test_mostra_info(tmp_path, capsys):
 
 # --reautenticar: apaga tokens/mapa da loja antiga e autentica de novo com o code
 def test_reautenticar_limpa_e_autentica(tmp_path, capsys):
-    from tray_sync.sync import main, monta
     sinc, fake, dbf = monta(tmp_path, REG[1:2], {10: '19189'})
     sinc.state.replace_map([('019189', '10')])
     sinc.state.reset_autorizacao()
