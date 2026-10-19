@@ -8,7 +8,7 @@ Fluxo de cada ciclo (a cada 'intervalo_segundos'):
   3. Se a Tray aceitou, grava o valor enviado em SAL_HASH/PRE_HASH no DBF;
      assim o produto so volta a ser enviado quando mudar de novo.
 
-Uso:  python -m tray_sync --config config.ini [--once] [--dry-run] [--limite N] [--remap] [--procura CODIGO]
+Uso:  python -m tray_sync --config config.ini [--once] [--dry-run] [--limite N] [--remap] [--procura CODIGO] [--produto ID]
 """
 import argparse
 import configparser
@@ -214,6 +214,23 @@ class Sincronizador(object):
         return self.state.retry_em(chave)
 
 
+def mostra_produto(sinc, tray_id):
+    """Diagnostico (--produto ID): mostra o que a API da Tray devolve para UM produto.
+
+    Gasta so 1 requisicao. Util para ver em qual campo a Tray guarda o nosso codigo
+    (reference? outro?) e se o produto e visivel para a API.
+    """
+    dados = sinc.tray.produto(tray_id)
+    prod = dados.get('Product', dados)
+    print('--- campos devolvidos pela API para o produto %s ---' % tray_id)
+    for k, v in prod.items():
+        if isinstance(v, (dict, list)):
+            v = '(%s com %d itens)' % (type(v).__name__, len(v))
+        txt = repr(v)
+        print('%-28s %s' % (k, txt if len(txt) <= 90 else txt[:87] + '...'))
+    print('--- o codigo que o DBF usaria (reference normalizada): %s ---' % referencia(str(prod.get('reference', ''))))
+
+
 def procura(sinc, codigo, arq_csv='tray_produtos.csv'):
     """Diagnostico (--procura CODIGO): mostra como um codigo aparece no mapa local e na Tray.
 
@@ -327,6 +344,7 @@ def main(argv=None):
     ap.add_argument('--once', action='store_true', help='roda um ciclo e sai')
     ap.add_argument('--dry-run', action='store_true', help='so mostra o que enviaria (nao chama a Tray nem grava o DBF)')
     ap.add_argument('--limite', type=int, default=None, help='envia no maximo N produtos por ciclo (util para testar)')
+    ap.add_argument('--produto', metavar='ID', help='diagnostico: mostra o que a API devolve para 1 produto (id da Tray)')
     ap.add_argument('--procura', metavar='CODIGO', help='diagnostico: procura o codigo na Tray e no mapa local')
     ap.add_argument('--remap', action='store_true', help='baixa de novo o mapa codigo->id da Tray e sai')
     a = ap.parse_args(argv)
@@ -344,6 +362,9 @@ def main(argv=None):
         return False
 
     sinc = monta(cfg, parar)
+    if a.produto:  # diagnostico de um produto pelo id da Tray e sai
+        mostra_produto(sinc, a.produto)
+        return 0
     if a.procura:  # diagnostico de um codigo e sai
         procura(sinc, a.procura)
         return 0

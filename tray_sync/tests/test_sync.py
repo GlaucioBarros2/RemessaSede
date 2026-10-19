@@ -38,6 +38,9 @@ class FakeTray(object):
                               'date_expiration_refresh_token': '2099-01-01 00:00:00'})
         if params.get('access_token') != self.token_valido:
             return Resp(401, {'message': 'Unauthorized'})
+        if method == 'GET' and url.rsplit('/', 1)[1] != 'products':   # produto unico
+            pid = url.rsplit('/', 1)[1]
+            return Resp(200, {'Product': {'id': pid, 'reference': self.produtos.get(int(pid), ''), 'name': 'x'}})
         if method == 'GET':
             itens = [{'Product': {'id': i, 'reference': ref, 'name': 'n'}} for i, ref in self.produtos.items()]
             pg, lim = params['page'], params['limit']
@@ -151,3 +154,12 @@ def test_procura_mostra_produto(tmp_path, capsys):
     assert 'com reference vazia ...........: 1' in saida
     assert 'references repetidas (ids diferentes com a mesma reference): 1' in saida   # 19189 e 019189
     assert open(csv_path, encoding='utf-8-sig').read().count('\n') == 5            # cabecalho + 4
+
+
+# --produto: mostra os campos que a API devolve para um produto
+def test_mostra_produto(tmp_path, capsys):
+    from tray_sync.sync import mostra_produto
+    sinc, fake, dbf = monta(tmp_path, REG[1:2], {10: '19189'})
+    mostra_produto(sinc, '10')
+    saida = capsys.readouterr().out
+    assert "reference" in saida and "'19189'" in saida and '019189' in saida

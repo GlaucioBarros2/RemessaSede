@@ -170,6 +170,10 @@ class TrayClient(object):
                 return
             pagina += 1
 
+    def produto(self, tray_id):
+        """Devolve o JSON completo de UM produto (GET /products/{id}); usado no diagnostico."""
+        return self._request('GET', '/products/%s' % tray_id).json()
+
     def atualiza(self, tray_id, preco, estoque, disponivel):
         """PUT no produto: atualiza preco, estoque e disponibilidade (1 = disponivel)."""
         body = {'Product': {'price': preco, 'stock': estoque, 'available': '1' if disponivel else '0'}}
