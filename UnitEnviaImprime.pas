@@ -404,6 +404,9 @@ begin
 
           Util := CoUtil.Create;
           cStat := 0;
+          msgRetWS     := '';     // evita aproveitar retorno/protocolo de outra nota
+          nroProtocolo := '';
+          dhProtocolo  := '';
           xmlAssinado := Util.Assinar(NFe, 'infNFe', nomeCertificado, resultado, msgResultado);
           NFeAssinada := xmlAssinado;   // evita usar XML residual de outra nota
 
@@ -470,6 +473,21 @@ begin
               PosFin  := Pos('</xMotivo>',msgRetWS);
               xxMotivo := Copy(msgRetWS,PosInic+9,(PosFin-(PosInic+9)));
 
+              // fallback: dados devolvidos pelo buscanfe2g
+              if Trim(xnProt) = '' then
+                xnProt := Trim(nroProtocolo);
+              if Trim(xdhRecbto) = '' then
+                xdhRecbto := Trim(dhProtocolo);
+
+              // autorizada mas sem numero de protocolo: nao grava nada,
+              // a nota continua pendente e sera consultada novamente no proximo ciclo
+              if Trim(xnProt) = '' then
+                begin
+                  Util := nil;
+                  Timer1.Enabled := True;
+                  Exit;
+                end;
+
               ProtAutorizacao := '<protNFe versao="2.00" xmlns="http://www.portalfiscal.inf.br/nfe">'+
                                     '<infProt>'+
                                        '<tpAmb>'+cTpAmb+'</tpAmb>'+
@@ -486,15 +504,12 @@ begin
               NFeAssinada := NFeAssinada+ProtAutorizacao;
 
 
-              nPosi := Pos('nProt',msgRetWS);
-              cProtoc := copy(msgRetWS,nPosi+6,15);
-
-              nPosi := Pos('dhRecbto',msgRetWS);
-              cProtoc := cProtoc + ' - '+copy(msgRetWS,nPosi+17,02)+'/'     // data  2011-03-21T21:58:48
-                                        +copy(msgRetWS,nPosi+14,02)+'/'     // data
-                                        +copy(msgRetWS,nPosi+09,04);        // data
-
-              cProtoc := cProtoc + ' - '+copy(msgRetWS,nPosi+20,08);        // hora 11-03-21T21:58:48
+              // protocolo + data/hora, a partir das tags ja extraidas (xnProt / xdhRecbto)
+              // formato dhRecbto: 2011-03-21T21:58:48
+              cProtoc := Trim(xnProt) + ' - '+copy(xdhRecbto,9,02)+'/'
+                                            +copy(xdhRecbto,6,02)+'/'
+                                            +copy(xdhRecbto,1,04)
+                                      + ' - '+copy(xdhRecbto,12,08);
 
               DM.ATCadPd1.Edit;
               DM.ATCadPd1NUMPROTOC.AsString := cProtoc;
